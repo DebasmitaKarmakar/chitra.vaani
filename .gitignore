@@ -27,6 +27,7 @@ Thumbs.db
 # IDE/editor settings
 .vscode/
 .idea/
+.vercel/
 
 # Temporary files
 *.tmp
