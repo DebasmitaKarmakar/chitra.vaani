@@ -47,24 +47,23 @@ ChitraVaani functions both as a **real art business platform** and a **full-stac
 
 ---
 
-## 2. System Architecture
+## 🧱 System Architecture
 
-The application follows a standard three-tier architecture:
+High-level architecture:
 
-\`\`\`yaml
-+-------------------------+         +-------------------------+
-|        Frontend         |         |         Backend         |
-| React + Vite (Client)   | <-----> | Node.js + Express (API) |
-+------------+------------+         +------------+------------+
++-------------------------+        +-------------------------+
+|        Frontend         |        |        Backend          |
+|  React + Vite (Client)  | <----> | Node.js + Express (API) |
+|                         |   API  |                         |
++------------+------------+        +------------+------------+
              ^                                   |
-             | API Request/Response              v
-             |                         +------------------+
-             +-----------------------> |     MySQL DB     |
-                                       | Art, Orders,     |
-                                       | Categories,      |
-                                       | Admin Users      |
-                                       +------------------+
-\`\`\`
+             |                                   v
+             |                          +------------------+
+             |                          |     MySQL DB     |
+             +------------------------> | (Art, Orders,    |
+                                        |  Categories,     |
+                                        |  Admin Users)    |
+                                        +------------------+
 
 * **Frontend** hosted on Vercel (static site)
 * **Backend** on Vercel serverless functions
@@ -113,24 +112,26 @@ The application follows a standard three-tier architecture:
 
 chitra.vaani/
 │
-├── client/                     # React Frontend
-│   ├── public/                 # Static assets
+├── client/                # React (Vite) frontend
+│   ├── public/            # Static assets (favicons, images if any)
 │   └── src/
-│       ├── pages/              # Screens (Home, Gallery, Admin...)
-│       ├── components/         # UI Components (Navbar, Cards, Forms...)
-│       ├── App.jsx             # Main React Component
-│       └── main.jsx            # Root Entry
+│       ├── components/    # Shared UI components (Navbar, Cards, etc.)
+│       ├── pages/         # Pages (Home, Gallery, Admin, etc.)
+│       ├── App.jsx        # Main app component
+│       ├── main.jsx       # Entry point
+│       └── ...            # Other utilities, hooks, styles
 │
-├── server/                     # Backend
-│   ├── db.js                   # MySQL Connection Pool
-│   ├── routes/                 # API Routes
-│   ├── server.js               # Express App
-│   └── vercel.json             # Serverless Deploy Config
+├── server/                # Node.js + Express backend
+│   ├── routes/            # Route handlers (artworks, orders, admin, etc.)
+│   ├── db.js              # MySQL connection pool
+│   ├── server.js or index.js
+│   └── ...                # Controllers, middlewares, utils
 │
-├── database_setup.sql          # Database Schema
-├── .gitignore                  # Ignore rules (node_modules, env, build)
-├── package.json                # Project Dependencies
-└── README.md                   # Documentation
+├── database_setup.sql     # SQL script to create tables and sample data
+├── .gitignore             # Ignores node_modules, build, env files, etc.
+├── package.json           # May define workspaces or root scripts
+├── package-lock.json
+└── README.md              # Project documentation (this file)
 
 ---
 
@@ -187,9 +188,13 @@ GMAIL_APP_PASSWORD=your-gmail-app-password
 ### Client `.env`
 
 VITE_API_URL=https://your-backend-api.com/api
+
 VITE_WHATSAPP_NUMBER=your-number
+
 VITE_ARTIST_EMAIL=your-email
+
 VITE_INSTAGRAM=@your-instagram
+
 VITE_GOOGLE_CLIENT_ID=your-google-client-id
 
 ---
@@ -255,4 +260,5 @@ All `/api/...` routes are deployed as serverless functions automatically. Enviro
 ## Conclusion
 
 ChitraVaani successfully merges handmade creativity with modern web development, demonstrating end-to-end engineering across frontend UI, backend APIs, secure authentication, database design, and cloud deployment. It stands as both a practical business tool and a strong full-stack development showcase.
+
 
