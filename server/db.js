@@ -7,7 +7,7 @@ console.log(' Host:', process.env.DB_HOST);
 console.log(' User:', process.env.DB_USER);
 console.log(' Database:', process.env.DB_NAME);
 
-// Create connection pool (Aiven requires SSL)
+// Create connection pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -18,10 +18,8 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   connectTimeout: 60000,
-  
-  //  FIXED SSL CONFIGURATION FOR AIVEN
   ssl: {
-    rejectUnauthorized: false  // Changed from true to false to accept self-signed certs
+    rejectUnauthorized: false
   }
 });
 
@@ -32,10 +30,10 @@ const promisePool = pool.promise();
 pool.getConnection((err, connection) => {
   if (err) {
     console.error(' Database connection failed:', err.message);
-    console.error(' Check your .env DB credentials & SSL settings');
+    console.error('  Check your .env DB credentials & SSL settings');
     return;
   }
-  console.log('MySQL Database connected successfully');
+  console.log(' MySQL Database connected successfully');
   connection.release();
 });
 
@@ -44,6 +42,7 @@ async function initDatabase() {
   try {
     console.log(' Initializing database tables...');
 
+    // Categories Table
     await promisePool.query(`
       CREATE TABLE IF NOT EXISTS categories (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -53,6 +52,7 @@ async function initDatabase() {
     `);
     console.log(' Categories table ready');
 
+    // Artworks Table
     await promisePool.query(`
       CREATE TABLE IF NOT EXISTS artworks (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -70,6 +70,7 @@ async function initDatabase() {
     `);
     console.log(' Artworks table ready');
 
+    // Orders Table
     await promisePool.query(`
       CREATE TABLE IF NOT EXISTS orders (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -88,6 +89,7 @@ async function initDatabase() {
     `);
     console.log(' Orders table ready');
 
+    // Admin Table
     await promisePool.query(`
       CREATE TABLE IF NOT EXISTS admin (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -98,11 +100,27 @@ async function initDatabase() {
     `);
     console.log(' Admin table ready');
 
-    // Create default admin with updated credentials
+    //  NEW: Feedback Table
+    await promisePool.query(`
+      CREATE TABLE IF NOT EXISTS feedback (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_email VARCHAR(255) NOT NULL,
+        feedback_type VARCHAR(50) NOT NULL,
+        rating INT NOT NULL,
+        message TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'New',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    console.log(' Feedback table ready');
+
+    // Create default admin
     const [admins] = await promisePool.query('SELECT COUNT(*) as count FROM admin');
     if (admins[0].count === 0) {
-      const username = process.env.ADMIN_USERNAME;
-      const password = process.env.ADMIN_PASSWORD;
+      const username = process.env.ADMIN_USERNAME || 'admin';
+      const password = process.env.ADMIN_PASSWORD || 'admin123';
       const hashedPassword = await bcrypt.hash(password, 10);
 
       await promisePool.query(
@@ -110,7 +128,7 @@ async function initDatabase() {
         [username, hashedPassword]
       );
 
-      console.log(' Default admin created - Username: OH.RIM');
+      console.log(` Default admin created - Username: ${username}`);
     }
     
     console.log(' Database initialization complete!');

@@ -51,6 +51,45 @@ CREATE TABLE IF NOT EXISTS admin (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Feedback Table
+-- Run this in your MySQL database first
+-- This creates the feedback table
+
+USE defaultdb;
+
+-- Drop existing table if you want to start fresh (CAREFUL!)
+-- DROP TABLE IF EXISTS feedback;
+
+-- Create feedback table
+CREATE TABLE IF NOT EXISTS feedback (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  customer_name VARCHAR(255) NOT NULL,
+  customer_email VARCHAR(255) NOT NULL,
+  feedback_type VARCHAR(50) NOT NULL,
+  rating INT NOT NULL,
+  message TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'New',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Verify table was created
+SHOW TABLES LIKE 'feedback';
+
+-- Check table structure
+DESCRIBE feedback;
+
+-- Insert a test record to verify it works
+INSERT INTO feedback (customer_name, customer_email, feedback_type, rating, message)
+VALUES ('Test User', 'test@example.com', 'website_experience', 5, 'This is a test feedback');
+
+-- Check if data was inserted
+SELECT * FROM feedback;
+
+-- If successful, delete the test record
+DELETE FROM feedback WHERE customer_email = 'test@example.com';
+
+SELECT 'Feedback table is ready!' as Status;
 -- Insert Default Categories
 INSERT IGNORE INTO categories (name) VALUES 
   ('Paintings'),
@@ -69,46 +108,6 @@ VALUES (
 
 -- Show tables
 SHOW TABLES;
-
--- Create Feedback Table
-CREATE TABLE IF NOT EXISTS feedback (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  customer_name VARCHAR(255) NOT NULL,
-  customer_email VARCHAR(255) NOT NULL,
-  feedback_type ENUM(
-    'artwork_quality',
-    'customer_service', 
-    'website_experience',
-    'delivery',
-    'pricing',
-    'suggestion',
-    'complaint',
-    'appreciation',
-    'other'
-  ) NOT NULL,
-  rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-  message TEXT NOT NULL,
-  status ENUM('New', 'In Review', 'Resolved', 'Archived') DEFAULT 'New',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
-  INDEX idx_customer_email (customer_email),
-  INDEX idx_feedback_type (feedback_type),
-  INDEX idx_rating (rating),
-  INDEX idx_status (status),
-  INDEX idx_created_at (created_at)
-);
-
--- Verify the table was created
-SHOW TABLES LIKE 'feedback';
-
--- Show table structure
-DESC feedback;
-
--- Check if table is empty
-SELECT COUNT(*) as feedback_count FROM feedback;
-
-SELECT 'Feedback table created successfully!' as Status;
 
 -- Verify setup
 SELECT 'Setup Complete!' as Status;

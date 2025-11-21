@@ -10,17 +10,18 @@ const artworkRoutes = require('./routes/artworks');
 const orderRoutes = require('./routes/orders');
 const categoryRoutes = require('./routes/categories');
 const adminRoutes = require('./routes/admin');
-const feedbackRoutes = require('./routes/feedback');
+const feedbackRoutes = require('./routes/feedback'); // ← Make sure this line exists
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-//  CORS Configuration
 const allowedOrigins = [
-  'https://chitravaani.vercel.app',     // frontend prod
-  'https://chitravaani.vercel.app/*',   // optional
-  'https://*.vercel.app',               // ALL your preview builds
-  'http://localhost:5173'               // local dev
+  'https://chitravaani.vercel.app',
+  'https://chitravaani.vercel.app/*',
+  'https://*.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
 ];
 
 app.use(cors({
@@ -28,7 +29,7 @@ app.use(cors({
     if (!origin || allowedOrigins.some(o => origin.startsWith(o.replace('*', '')))) {
       callback(null, true);
     } else {
-      console.log(" CORS blocked:", origin);
+      console.log("❌ CORS blocked:", origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -38,13 +39,13 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging middleware
+// Request logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// Health check endpoint
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -53,12 +54,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// API Routes
+// API Routes - MAKE SURE ALL ARE PROPERLY REGISTERED
 app.use('/api/artworks', artworkRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/feedback', feedbackRoutes);
+app.use('/api/feedback', feedbackRoutes); // ← Line 61 should look like this
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -70,6 +71,7 @@ app.get('/', (req, res) => {
       orders: '/api/orders',
       categories: '/api/categories',
       admin: '/api/admin',
+      feedback: '/api/feedback',
       health: '/api/health'
     }
   });
@@ -84,7 +86,7 @@ app.use((req, res) => {
   });
 });
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   
@@ -101,30 +103,23 @@ app.use((err, req, res, next) => {
   });
 });
 
-const { testEmailConnection } = require('./emailService');
-
-// Initialize database and start server
+// Start server
 async function startServer() {
   try {
-    // Initialize database tables
     await initDatabase();
     
-    // Test email connection
-    await testEmailConnection();
-    
-    // Start server
     app.listen(PORT, () => {
       console.log('=================================');
-      console.log(' ChitraVaani API Server');
+      console.log('✅ ChitraVaani API Server');
       console.log('=================================');
-      console.log(` Server running on port ${PORT}`);
-      console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(` API URL: http://localhost:${PORT}`);
-      console.log(` Health Check: http://localhost:${PORT}/api/health`);
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`✅ API URL: http://localhost:${PORT}`);
+      console.log(`✅ Health Check: http://localhost:${PORT}/api/health`);
       console.log('=================================');
     });
   } catch (error) {
-    console.error(' Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }
@@ -151,7 +146,6 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-// Start the server
 startServer();
 
 module.exports = app;
