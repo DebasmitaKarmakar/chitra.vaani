@@ -111,7 +111,6 @@ The application follows a standard three-tier architecture:
 
 ## 5. Folder Structure
 
-\`\`\`bash
 chitra.vaani/
 │
 ├── client/                     # React Frontend
@@ -132,7 +131,6 @@ chitra.vaani/
 ├── .gitignore                  # Ignore rules (node_modules, env, build)
 ├── package.json                # Project Dependencies
 └── README.md                   # Documentation
-\`\`\`
 
 ---
 
@@ -151,45 +149,15 @@ chitra.vaani/
 
 The backend uses Express Router to structure routes for artworks, categories, and admin authentication. Passwords are hashed using **bcrypt**, ensuring no plain text credentials are stored. The server interacts with MySQL using a connection pool for improved performance. All queries and routes are built using `async/await` for cleaner logic.
 
-### Example: Admin Login
-
-\`\`\`javascript
-app.post('/api/admin/login', async (req, res) => {
-  const { username, password } = req.body;
-  const [rows] = await pool.query('SELECT * FROM admin WHERE username = ?', [username]);
-  if (!rows.length) return res.status(401).json({ message: 'Invalid user' });
-
-  const isValid = await bcrypt.compare(password, rows[0].password_hash);
-  if (!isValid) return res.status(401).json({ message: 'Wrong password' });
-
-  res.json({ message: 'Login Successful' });
-});
-\`\`\`
-
----
-
 ## 8. Frontend Implementation (React + Vite)
 
 The frontend is built using React with Vite, providing fast build performance. UI is component-based, with separate files for cards, forms, navbars, and pages. All data is fetched via **Axios** from `/api/...` endpoints. Admin forms submit data using POST, while public views fetch data using GET.
-
-### Example Fetch Call
-
-\`\`\`javascript
-const fetchArtworks = async () => {
-  const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/artworks`);
-  setData(res.data);
-};
-\`\`\`
-
----
 
 ## 9. Environment Variables
 
 Environment variables are used to securely store configuration values. **Never commit `.env` files to GitHub.**
 
 ### Server `.env`
-
-\`\`\`ini
 PORT=5000
 NODE_ENV=development
 
@@ -215,17 +183,14 @@ GOOGLE_CLIENT_ID=your-google-client-id
 ADMIN_EMAILS=email1@gmail.com,email2@gmail.com
 
 GMAIL_APP_PASSWORD=your-gmail-app-password
-\`\`\`
 
 ### Client `.env`
 
-\`\`\`ini
 VITE_API_URL=https://your-backend-api.com/api
 VITE_WHATSAPP_NUMBER=your-number
 VITE_ARTIST_EMAIL=your-email
 VITE_INSTAGRAM=@your-instagram
 VITE_GOOGLE_CLIENT_ID=your-google-client-id
-\`\`\`
 
 ---
 
@@ -233,21 +198,17 @@ VITE_GOOGLE_CLIENT_ID=your-google-client-id
 
 ### Backend
 
-\`\`\`bash
 cd server
 npm install
 # Ensure .env is configured
 node server.js
-\`\`\`
 
 ### Frontend
 
-\`\`\`bash
 cd client
 npm install
 # Ensure .env is configured
 npm run dev
-\`\`\`
 
 ---
 
@@ -265,9 +226,8 @@ The frontend is deployed as a static site:
 
 The backend is configured for Vercel Serverless using a `vercel.json` configuration file, which points to the main Express app export:
 
-\`\`\`javascript
 module.exports = app;
-\`\`\`
+
 All `/api/...` routes are deployed as serverless functions automatically. Environment variables are configured directly in the Vercel dashboard.
 
 ---
@@ -295,3 +255,4 @@ All `/api/...` routes are deployed as serverless functions automatically. Enviro
 ## Conclusion
 
 ChitraVaani successfully merges handmade creativity with modern web development, demonstrating end-to-end engineering across frontend UI, backend APIs, secure authentication, database design, and cloud deployment. It stands as both a practical business tool and a strong full-stack development showcase.
+
