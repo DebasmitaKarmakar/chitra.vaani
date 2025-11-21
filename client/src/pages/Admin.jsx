@@ -11,7 +11,9 @@ function Admin() {
   const [error, setError] = useState('')
   const [token, setToken] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
-  
+  const [feedback, setFeedback] = useState([])
+  const [feedbackStats, setFeedbackStats] = useState({})
+  const [feedbackFilter, setFeedbackFilter] = useState('all')
   const [artworks, setArtworks] = useState([])
   const [categories, setCategories] = useState([])
   const [orders, setOrders] = useState([])
@@ -146,15 +148,21 @@ function Admin() {
 
       if (activeTab === 'orders') {
         const [ordersRes, statsRes] = await Promise.all([
-          axios.get(`${API_URL}/orders`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${API_URL}/orders/stats/summary`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          axios.get(`${API_URL}/orders`, { headers }),
+          axios.get(`${API_URL}/orders/stats/summary`, { headers })
         ])
         setOrders(ordersRes.data)
         setOrderStats(statsRes.data)
+      }
+
+      // NEW: Load feedback data
+      if (activeTab === 'feedback') {
+        const [feedbackRes, statsRes] = await Promise.all([
+          axios.get(`${API_URL}/feedback`, { headers }),
+          axios.get(`${API_URL}/feedback/stats/summary`, { headers })
+        ])
+        setFeedback(feedbackRes.data)
+        setFeedbackStats(statsRes.data)
       }
 
       if (activeTab === 'dashboard') {
@@ -222,6 +230,23 @@ function Admin() {
       setUploading(false)
     }
   }
+
+  const handleDeleteFeedback = async (feedbackId) => {
+  if (!window.confirm("Are you sure you want to delete this feedback?")) return;
+
+  try {
+    await axios.delete(`${API_URL}/feedback/${feedbackId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    alert("Feedback deleted successfully!");
+    loadDashboardData();
+
+  } catch (error) {
+    console.error("Error deleting feedback:", error);
+    alert("Failed to delete feedback.");
+  }
+}
 
   const handleDeleteArtwork = async (id) => {
     if (!window.confirm('Delete this artwork? This cannot be undone!')) return
@@ -300,6 +325,42 @@ function Admin() {
       alert('Failed to update status')
     }
   }
+
+  const handleUpdateFeedbackStatus = async (feedbackId, newStatus) => {
+  try {
+    await axios.patch(`${API_URL}/feedback/${feedbackId}/status`,
+      { status: newStatus },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    alert('Feedback status updated!')
+    loadDashboardData()
+  } catch (error) {
+    console.error('Error updating feedback status:', error)
+    alert('Failed to update status')
+  }
+}
+
+  const handleExportFeedback = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/admin/export/feedback`, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: 'blob'
+    })
+
+    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `feedback_${Date.now()}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+
+    alert('Feedback exported successfully!')
+  } catch (error) {
+    console.error('Error exporting feedback:', error)
+    alert('Failed to export feedback')
+  }
+}
 
   const handleExportOrders = async () => {
     try {
@@ -498,8 +559,9 @@ function Admin() {
         </button>
       </div>
 
+      {/*2. Update the tabs array to include 'feedback':*/}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '2px solid #e5e5e5', flexWrap: 'wrap' }}>
-        {['dashboard', 'artworks', 'categories', 'orders', 'export'].map(tab => (
+        {['dashboard', 'artworks', 'categories', 'orders', 'feedback', 'export'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -862,6 +924,138 @@ function Admin() {
           )}
         </div>
       )}
+
+      {activeTab === 'feedback' && (
+      <div className="info-section">
+        <h2>Customer Feedback</h2>
+
+        {/* Feedback Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+          <div style={{ background: '#e3f2fd', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+            <h3>{feedbackStats.total_feedback || 0}</h3>
+            <p>Total Feedback</p>
+          </div>
+          <div style={{ background: '#fff3cd', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+            <h3>{feedbackStats.average_rating ? feedbackStats.average_rating.toFixed(1) : '0.0'} </h3>
+            <p>Avg Rating</p>
+          </div>
+          <div style={{ background: '#d4edda', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+            <h3>{feedbackStats.appreciation_feedback || 0}</h3>
+            <p>Appreciations</p>
+          </div>
+          <div style={{ background: '#f8d7da', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+            <h3>{feedbackStats.complaints || 0}</h3>
+            <p>Complaints</p>
+          </div>
+        </div>
+
+        {/* Filter */}
+        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontWeight: 600 }}>Filter by Status:</label>
+          <select 
+            value={feedbackFilter}
+            onChange={(e) => setFeedbackFilter(e.target.value)}
+            style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd' }}
+          >
+            <option value="all">All Feedback</option>
+            <option value="New">New</option>
+            <option value="In Review">In Review</option>
+            <option value="Resolved">Resolved</option>
+            <option value="Archived">Archived</option>
+          </select>
+
+          <button className="btn" onClick={handleExportFeedback} style={{ marginLeft: 'auto' }}>
+             Export Feedback to Excel
+          </button>
+        </div>
+
+        {/* Feedback List */}
+        {feedback.filter(f => feedbackFilter === 'all' || f.status === feedbackFilter).length > 0 ? (
+          <div style={{ display: 'grid', gap: '1.5rem' }}>
+            {feedback.filter(f => feedbackFilter === 'all' || f.status === feedbackFilter).map(item => (
+              <div key={item.id} style={{ 
+                background: '#f9f7f5', 
+                padding: '2rem', 
+                borderRadius: '12px', 
+                borderLeft: `4px solid ${
+                  item.rating === 5 ? '#10b981' : 
+                  item.rating === 4 ? '#3b82f6' : 
+                  item.rating === 3 ? '#f59e0b' : 
+                  item.rating === 2 ? '#f97316' : '#ef4444'
+                }` 
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <h4>Feedback #{item.id}</h4>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      {[1,2,3,4,5].map(star => (
+                        <span key={star} style={{ color: star <= item.rating ? '#fbbf24' : '#d1d5db', fontSize: '1.2rem' }}>
+                          
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <span style={{ color: '#666', fontSize: '0.9rem' }}>
+                    {new Date(item.created_at).toLocaleString()}
+                  </span>
+                </div>
+
+                <div style={{ 
+                  display: 'inline-block',
+                  padding: '0.4rem 0.8rem', 
+                  borderRadius: '12px', 
+                  fontSize: '0.85rem',
+                  marginBottom: '1rem',
+                  background: '#e0f2fe',
+                  color: '#0369a1',
+                  fontWeight: 600
+                }}>
+                  {item.feedback_type.replace('_', ' ').toUpperCase()}
+                </div>
+
+                <p style={{ marginBottom: '0.5rem' }}><strong>From:</strong> {item.customer_name}</p>
+                <p style={{ marginBottom: '0.5rem' }}><strong>Email:</strong> {item.customer_email}</p>
+                
+                <div style={{ 
+                  background: 'white', 
+                  padding: '1rem', 
+                  borderRadius: '8px', 
+                  margin: '1rem 0',
+                  borderLeft: '3px solid #cbd5e1'
+                }}>
+                  <strong>Message:</strong>
+                  <p style={{ marginTop: '0.5rem', color: '#374151' }}>{item.message}</p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label style={{ fontWeight: 600 }}>Status:</label>
+                  <select 
+                    value={item.status}
+                    onChange={(e) => handleUpdateFeedbackStatus(item.id, e.target.value)}
+                    style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd' }}
+                  >
+                    <option value="New">New</option>
+                    <option value="In Review">In Review</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Archived">Archived</option>
+                  </select>
+
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleDeleteFeedback(item.id)}
+                    style={{ marginLeft: 'auto', padding: '0.5rem 1rem' }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: '#666', textAlign: 'center', padding: '2rem' }}>No feedback found</p>
+        )}
+      </div>
+    )}
 
       {activeTab === 'export' && (
         <div className="info-section">

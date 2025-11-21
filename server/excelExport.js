@@ -143,6 +143,7 @@ async function generateOrderExcel(orders) {
     });
   });
 
+  
   // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
   return buffer;

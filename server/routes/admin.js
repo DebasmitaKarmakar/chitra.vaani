@@ -305,6 +305,30 @@ router.get('/export/orders', verifyToken, async (req, res) => {
   }
 });
 
+// feedback form
+router.get('/export/feedback', verifyToken, async (req, res) => {
+  try {
+    console.log(' Exporting feedback to Excel...');
+    
+    const [feedback] = await promisePool.query(`
+      SELECT * FROM feedback
+      ORDER BY created_at DESC
+    `);
+
+    const { generateFeedbackExcel } = require('../excelExport');
+    const buffer = await generateFeedbackExcel(feedback);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=feedback_${Date.now()}.xlsx`);
+    res.send(buffer);
+
+    console.log(' Feedback exported successfully');
+  } catch (error) {
+    console.error(' Error exporting feedback:', error);
+    res.status(500).json({ error: 'Failed to export feedback: ' + error.message });
+  }
+});
+
 //  FIXED: Export Artworks to Excel
 router.get('/export/artworks', verifyToken, async (req, res) => {
   try {
