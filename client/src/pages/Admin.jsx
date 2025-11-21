@@ -11,14 +11,17 @@ function Admin() {
   const [error, setError] = useState('')
   const [token, setToken] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
-  const [feedback, setFeedback] = useState([])
-  const [feedbackStats, setFeedbackStats] = useState({})
-  const [feedbackFilter, setFeedbackFilter] = useState('all')
+  
   const [artworks, setArtworks] = useState([])
   const [categories, setCategories] = useState([])
   const [orders, setOrders] = useState([])
   const [orderStats, setOrderStats] = useState({})
   const [dashboardStats, setDashboardStats] = useState(null)
+  
+  // FEEDBACK STATE
+  const [feedback, setFeedback] = useState([])
+  const [feedbackStats, setFeedbackStats] = useState({})
+  const [feedbackFilter, setFeedbackFilter] = useState('all')
   
   const [newArtwork, setNewArtwork] = useState({
     title: '',
@@ -57,14 +60,12 @@ function Admin() {
     }
   }, [activeTab, isLoggedIn, token])
 
-  // Traditional Login Handler
   const handleLogin = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
     try {
-      console.log('Attempting traditional login...')
       const response = await axios.post(`${API_URL}/admin/login`, {
         username: loginData.username,
         password: loginData.password
@@ -89,13 +90,11 @@ function Admin() {
     }
   }
 
-  // Google OAuth Login Handler
   const handleGoogleLogin = async (credentialResponse) => {
     setError('')
     setLoading(true)
 
     try {
-      console.log('Attempting Google OAuth login...')
       const response = await axios.post(`${API_URL}/admin/google-login`, {
         credential: credentialResponse.credential
       })
@@ -155,14 +154,20 @@ function Admin() {
         setOrderStats(statsRes.data)
       }
 
-      // NEW: Load feedback data
+      // LOAD FEEDBACK DATA
       if (activeTab === 'feedback') {
-        const [feedbackRes, statsRes] = await Promise.all([
-          axios.get(`${API_URL}/feedback`, { headers }),
-          axios.get(`${API_URL}/feedback/stats/summary`, { headers })
-        ])
-        setFeedback(feedbackRes.data)
-        setFeedbackStats(statsRes.data)
+        try {
+          const [feedbackRes, statsRes] = await Promise.all([
+            axios.get(`${API_URL}/feedback`, { headers }),
+            axios.get(`${API_URL}/feedback/stats/summary`, { headers })
+          ])
+          setFeedback(feedbackRes.data)
+          setFeedbackStats(statsRes.data)
+        } catch (err) {
+          console.error('Error loading feedback:', err)
+          setFeedback([])
+          setFeedbackStats({})
+        }
       }
 
       if (activeTab === 'dashboard') {
@@ -231,23 +236,6 @@ function Admin() {
     }
   }
 
-  const handleDeleteFeedback = async (feedbackId) => {
-  if (!window.confirm("Are you sure you want to delete this feedback?")) return;
-
-  try {
-    await axios.delete(`${API_URL}/feedback/${feedbackId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    alert("Feedback deleted successfully!");
-    loadDashboardData();
-
-  } catch (error) {
-    console.error("Error deleting feedback:", error);
-    alert("Failed to delete feedback.");
-  }
-}
-
   const handleDeleteArtwork = async (id) => {
     if (!window.confirm('Delete this artwork? This cannot be undone!')) return
 
@@ -281,21 +269,19 @@ function Admin() {
   }
 
   const handleDeleteOrder = async (orderId) => {
-  if (!window.confirm("Are you sure you want to delete this order?")) return;
+    if (!window.confirm("Are you sure you want to delete this order?")) return
 
-  try {
-    await axios.delete(`${API_URL}/orders/${orderId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    alert("Order deleted successfully!");
-    loadDashboardData();
-
-  } catch (error) {
-    console.error("Error deleting order:", error);
-    alert("Failed to delete order.");
+    try {
+      await axios.delete(`${API_URL}/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      alert("Order deleted successfully!")
+      loadDashboardData()
+    } catch (error) {
+      console.error("Error deleting order:", error)
+      alert("Failed to delete order.")
+    }
   }
-};
 
   const handleDeleteCategory = async (id) => {
     if (!window.confirm('Delete this category?')) return
@@ -326,41 +312,35 @@ function Admin() {
     }
   }
 
+  // FEEDBACK HANDLERS
   const handleUpdateFeedbackStatus = async (feedbackId, newStatus) => {
-  try {
-    await axios.patch(`${API_URL}/feedback/${feedbackId}/status`,
-      { status: newStatus },
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    alert('Feedback status updated!')
-    loadDashboardData()
-  } catch (error) {
-    console.error('Error updating feedback status:', error)
-    alert('Failed to update status')
+    try {
+      await axios.patch(`${API_URL}/feedback/${feedbackId}/status`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      alert('Feedback status updated!')
+      loadDashboardData()
+    } catch (error) {
+      console.error('Error updating feedback status:', error)
+      alert('Failed to update status')
+    }
   }
-}
 
-  const handleExportFeedback = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/admin/export/feedback`, {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: 'blob'
-    })
+  const handleDeleteFeedback = async (feedbackId) => {
+    if (!window.confirm("Are you sure you want to delete this feedback?")) return
 
-    const url = window.URL.createObjectURL(new Blob([response.data]))
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', `feedback_${Date.now()}.xlsx`)
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-
-    alert('Feedback exported successfully!')
-  } catch (error) {
-    console.error('Error exporting feedback:', error)
-    alert('Failed to export feedback')
+    try {
+      await axios.delete(`${API_URL}/feedback/${feedbackId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      alert("Feedback deleted successfully!")
+      loadDashboardData()
+    } catch (error) {
+      console.error("Error deleting feedback:", error)
+      alert("Failed to delete feedback.")
+    }
   }
-}
 
   const handleExportOrders = async () => {
     try {
@@ -406,11 +386,37 @@ function Admin() {
     }
   }
 
+  const handleExportFeedback = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/admin/export/feedback`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      })
+
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `feedback_${Date.now()}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      alert('Feedback exported successfully!')
+    } catch (error) {
+      console.error('Error exporting feedback:', error)
+      alert('Failed to export feedback')
+    }
+  }
+
   const filteredOrders = filterStatus === 'all' 
     ? orders 
     : orders.filter(o => o.status === filterStatus)
 
-  // LOGIN PAGE WITH BOTH OPTIONS
+  const filteredFeedback = feedbackFilter === 'all'
+    ? feedback
+    : feedback.filter(f => f.status === feedbackFilter)
+
+  // LOGIN PAGE
   if (!isLoggedIn) {
     return (
       <div className="container fade-in admin-page">
@@ -421,7 +427,6 @@ function Admin() {
 
         <div className="info-section" style={{ maxWidth: '500px', margin: '0 auto' }}>
           
-          {/* Google Login Section */}
           <div style={{ 
             background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)', 
             padding: '2rem', 
@@ -447,7 +452,6 @@ function Admin() {
             </div>
           </div>
 
-          {/* Divider */}
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -459,7 +463,6 @@ function Admin() {
             <div style={{ flex: 1, height: '1px', background: '#ddd' }}></div>
           </div>
 
-          {/* Traditional Login Form */}
           <div style={{ 
             background: '#f9f7f5', 
             padding: '2rem', 
@@ -496,12 +499,8 @@ function Admin() {
                 {loading ? 'Logging in...' : 'Login with Password'}
               </button>
             </form>
-
-            <p style={{ marginTop: '1rem', color: '#666', fontSize: '0.85rem', textAlign: 'center' }}>
-            </p>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div style={{ 
               marginTop: '1.5rem', 
@@ -515,7 +514,6 @@ function Admin() {
             </div>
           )}
 
-          {/* Loading Message */}
           {loading && (
             <div style={{ 
               marginTop: '1.5rem', 
@@ -528,23 +526,6 @@ function Admin() {
               Verifying credentials...
             </div>
           )}
-
-          {/* Info Box */}
-          <div style={{ 
-            marginTop: '2rem', 
-            padding: '1.5rem', 
-            background: '#fff3e0', 
-            borderRadius: '12px',
-            border: '2px solid #ff9800'
-          }}>
-            <h4 style={{ color: '#e65100', marginBottom: '1rem' }}>For Administrators</h4>
-            <ul style={{ color: '#666', lineHeight: '1.8', marginLeft: '1.5rem' }}>
-              <li>Use Google if your email is authorized </li>
-              <li>Use username/password for traditional access</li>
-              <li>Both methods are equally secure</li>
-              <li>Contact system admin if you need access</li>
-            </ul>
-          </div>
         </div>
       </div>
     )
@@ -559,7 +540,6 @@ function Admin() {
         </button>
       </div>
 
-      {/*2. Update the tabs array to include 'feedback':*/}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '2px solid #e5e5e5', flexWrap: 'wrap' }}>
         {['dashboard', 'artworks', 'categories', 'orders', 'feedback', 'export'].map(tab => (
           <button
@@ -926,136 +906,133 @@ function Admin() {
       )}
 
       {activeTab === 'feedback' && (
-      <div className="info-section">
-        <h2>Customer Feedback</h2>
+        <div className="info-section">
+          <h2>Customer Feedback</h2>
 
-        {/* Feedback Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-          <div style={{ background: '#e3f2fd', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-            <h3>{feedbackStats.total_feedback || 0}</h3>
-            <p>Total Feedback</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            <div style={{ background: '#e3f2fd', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+              <h3>{feedbackStats.total_feedback || 0}</h3>
+              <p>Total Feedback</p>
+            </div>
+            <div style={{ background: '#fff3cd', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+              <h3>{feedbackStats.average_rating ? feedbackStats.average_rating.toFixed(1) : '0.0'} ⭐</h3>
+              <p>Avg Rating</p>
+            </div>
+            <div style={{ background: '#d4edda', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+              <h3>{feedbackStats.appreciation_feedback || 0}</h3>
+              <p>Appreciations</p>
+            </div>
+            <div style={{ background: '#f8d7da', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+              <h3>{feedbackStats.complaints || 0}</h3>
+              <p>Complaints</p>
+            </div>
           </div>
-          <div style={{ background: '#fff3cd', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-            <h3>{feedbackStats.average_rating ? feedbackStats.average_rating.toFixed(1) : '0.0'} </h3>
-            <p>Avg Rating</p>
+
+          <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <label style={{ fontWeight: 600 }}>Filter by Status:</label>
+            <select 
+              value={feedbackFilter}
+              onChange={(e) => setFeedbackFilter(e.target.value)}
+              style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd' }}
+            >
+              <option value="all">All Feedback</option>
+              <option value="New">New</option>
+              <option value="In Review">In Review</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Archived">Archived</option>
+            </select>
+
+            <button className="btn" onClick={handleExportFeedback} style={{ marginLeft: 'auto' }}>
+              📥 Export Feedback to Excel
+            </button>
           </div>
-          <div style={{ background: '#d4edda', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-            <h3>{feedbackStats.appreciation_feedback || 0}</h3>
-            <p>Appreciations</p>
-          </div>
-          <div style={{ background: '#f8d7da', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-            <h3>{feedbackStats.complaints || 0}</h3>
-            <p>Complaints</p>
-          </div>
-        </div>
 
-        {/* Filter */}
-        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ fontWeight: 600 }}>Filter by Status:</label>
-          <select 
-            value={feedbackFilter}
-            onChange={(e) => setFeedbackFilter(e.target.value)}
-            style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd' }}
-          >
-            <option value="all">All Feedback</option>
-            <option value="New">New</option>
-            <option value="In Review">In Review</option>
-            <option value="Resolved">Resolved</option>
-            <option value="Archived">Archived</option>
-          </select>
-
-          <button className="btn" onClick={handleExportFeedback} style={{ marginLeft: 'auto' }}>
-             Export Feedback to Excel
-          </button>
-        </div>
-
-        {/* Feedback List */}
-        {feedback.filter(f => feedbackFilter === 'all' || f.status === feedbackFilter).length > 0 ? (
-          <div style={{ display: 'grid', gap: '1.5rem' }}>
-            {feedback.filter(f => feedbackFilter === 'all' || f.status === feedbackFilter).map(item => (
-              <div key={item.id} style={{ 
-                background: '#f9f7f5', 
-                padding: '2rem', 
-                borderRadius: '12px', 
-                borderLeft: `4px solid ${
-                  item.rating === 5 ? '#10b981' : 
-                  item.rating === 4 ? '#3b82f6' : 
-                  item.rating === 3 ? '#f59e0b' : 
-                  item.rating === 2 ? '#f97316' : '#ef4444'
-                }` 
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-                  <div>
-                    <h4>Feedback #{item.id}</h4>
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                      {[1,2,3,4,5].map(star => (
-                        <span key={star} style={{ color: star <= item.rating ? '#fbbf24' : '#d1d5db', fontSize: '1.2rem' }}>
-                          
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <span style={{ color: '#666', fontSize: '0.9rem' }}>
-                    {new Date(item.created_at).toLocaleString()}
-                  </span>
-                </div>
-
-                <div style={{ 
-                  display: 'inline-block',
-                  padding: '0.4rem 0.8rem', 
+          {filteredFeedback.length > 0 ? (
+            <div style={{ display: 'grid', gap: '1.5rem' }}>
+              {filteredFeedback.map(item => (
+                <div key={item.id} style={{ 
+                  background: '#f9f7f5', 
+                  padding: '2rem', 
                   borderRadius: '12px', 
-                  fontSize: '0.85rem',
-                  marginBottom: '1rem',
-                  background: '#e0f2fe',
-                  color: '#0369a1',
-                  fontWeight: 600
+                  borderLeft: `4px solid ${
+                    item.rating === 5 ? '#10b981' : 
+                    item.rating === 4 ? '#3b82f6' : 
+                    item.rating === 3 ? '#f59e0b' : 
+                    item.rating === 2 ? '#f97316' : '#ef4444'
+                  }` 
                 }}>
-                  {item.feedback_type.replace('_', ' ').toUpperCase()}
-                </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <h4>Feedback #{item.id}</h4>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                        {[1,2,3,4,5].map(star => (
+                          <span key={star} style={{ color: star <= item.rating ? '#fbbf24' : '#d1d5db', fontSize: '1.2rem' }}>
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <span style={{ color: '#666', fontSize: '0.9rem' }}>
+                      {new Date(item.created_at).toLocaleString()}
+                    </span>
+                  </div>
 
-                <p style={{ marginBottom: '0.5rem' }}><strong>From:</strong> {item.customer_name}</p>
-                <p style={{ marginBottom: '0.5rem' }}><strong>Email:</strong> {item.customer_email}</p>
-                
-                <div style={{ 
-                  background: 'white', 
-                  padding: '1rem', 
-                  borderRadius: '8px', 
-                  margin: '1rem 0',
-                  borderLeft: '3px solid #cbd5e1'
-                }}>
-                  <strong>Message:</strong>
-                  <p style={{ marginTop: '0.5rem', color: '#374151' }}>{item.message}</p>
-                </div>
+                  <div style={{ 
+                    display: 'inline-block',
+                    padding: '0.4rem 0.8rem', 
+                    borderRadius: '12px', 
+                    fontSize: '0.85rem',
+                    marginBottom: '1rem',
+                    background: '#e0f2fe',
+                    color: '#0369a1',
+                    fontWeight: 600
+                  }}>
+                    {item.feedback_type.replace(/_/g, ' ').toUpperCase()}
+                  </div>
 
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <label style={{ fontWeight: 600 }}>Status:</label>
-                  <select 
-                    value={item.status}
-                    onChange={(e) => handleUpdateFeedbackStatus(item.id, e.target.value)}
-                    style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd' }}
-                  >
-                    <option value="New">New</option>
-                    <option value="In Review">In Review</option>
-                    <option value="Resolved">Resolved</option>
-                    <option value="Archived">Archived</option>
-                  </select>
+                  <p style={{ marginBottom: '0.5rem' }}><strong>From:</strong> {item.customer_name}</p>
+                  <p style={{ marginBottom: '0.5rem' }}><strong>Email:</strong> {item.customer_email}</p>
+                  
+                  <div style={{ 
+                    background: 'white', 
+                    padding: '1rem', 
+                    borderRadius: '8px', 
+                    margin: '1rem 0',
+                    borderLeft: '3px solid #cbd5e1'
+                  }}>
+                    <strong>Message:</strong>
+                    <p style={{ marginTop: '0.5rem', color: '#374151' }}>{item.message}</p>
+                  </div>
 
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleDeleteFeedback(item.id)}
-                    style={{ marginLeft: 'auto', padding: '0.5rem 1rem' }}
-                  >
-                    Delete
-                  </button>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label style={{ fontWeight: 600 }}>Status:</label>
+                    <select 
+                      value={item.status}
+                      onChange={(e) => handleUpdateFeedbackStatus(item.id, e.target.value)}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd' }}
+                    >
+                      <option value="New">New</option>
+                      <option value="In Review">In Review</option>
+                      <option value="Resolved">Resolved</option>
+                      <option value="Archived">Archived</option>
+                    </select>
+
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handleDeleteFeedback(item.id)}
+                      style={{ marginLeft: 'auto', padding: '0.5rem 1rem' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p style={{ color: '#666', textAlign: 'center', padding: '2rem' }}>No feedback found</p>
-        )}
-      </div>
-    )}
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: '#666', textAlign: 'center', padding: '2rem' }}>No feedback found</p>
+          )}
+        </div>
+      )}
 
       {activeTab === 'export' && (
         <div className="info-section">
@@ -1077,15 +1054,24 @@ function Admin() {
                 Download Artworks Excel
               </button>
             </div>
+
+            <div style={{ background: '#f9f7f5', padding: '2rem', borderRadius: '12px' }}>
+              <h3>Export Feedback</h3>
+              <p>Download all customer feedback as Excel spreadsheet</p>
+              <button className="btn" onClick={handleExportFeedback} style={{ marginTop: '1rem' }}>
+                Download Feedback Excel
+              </button>
+            </div>
           </div>
 
           <div style={{ background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)', padding: '2rem', borderRadius: '12px', marginTop: '2rem', border: '2px solid #ff9800' }}>
             <h3>Export Tips</h3>
             <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem' }}>
-              <li style={{ padding: '0.5rem 0' }}>Excel files include all data fields</li>
-              <li style={{ padding: '0.5rem 0' }}>Orders are color-coded by status</li>
-              <li style={{ padding: '0.5rem 0' }}>Perfect for business records and analysis</li>
-              <li style={{ padding: '0.5rem 0' }}>Compatible with Excel, Google Sheets, LibreOffice</li>
+              <li style={{ padding: '0.5rem 0' }}>✅ Excel files include all data fields</li>
+              <li style={{ padding: '0.5rem 0' }}>✅ Orders are color-coded by status</li>
+              <li style={{ padding: '0.5rem 0' }}>✅ Feedback includes star ratings and statistics</li>
+              <li style={{ padding: '0.5rem 0' }}>✅ Perfect for business records and analysis</li>
+              <li style={{ padding: '0.5rem 0' }}>✅ Compatible with Excel, Google Sheets, LibreOffice</li>
             </ul>
           </div>
         </div>
@@ -1093,4 +1079,5 @@ function Admin() {
     </div>
   )
 }
+
 export default Admin
