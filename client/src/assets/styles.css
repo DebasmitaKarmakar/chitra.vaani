@@ -1,0 +1,666 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Modern Color Palette */
+  --primary: #6C5CE7;
+  --primary-dark: #5F3DC4;
+  --secondary: #FD79A8;
+  --accent: #00B894;
+  --dark: #2D3436;
+  --light: #DFE6E9;
+  --white: #FFFFFF;
+  --gray: #636E72;
+  --gray-light: #B2BEC3;
+  --background: #F8F9FA;
+  --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --shadow: 0 10px 40px rgba(108, 92, 231, 0.15);
+  --shadow-hover: 0 15px 50px rgba(108, 92, 231, 0.25);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--background);
+  color: var(--dark);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Modern Navigation */
+.header {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 3px solid var(--primary);
+}
+
+.header nav {
+  padding: 1.5rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3rem;
+}
+
+.header a {
+  text-decoration: none;
+  color: var(--dark);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.header a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: var(--gradient);
+  transition: width 0.3s ease;
+}
+
+.header a:hover::after,
+.header a.active::after {
+  width: 100%;
+}
+
+.header a:hover,
+.header a.active {
+  color: var(--primary);
+}
+
+/* Hero Section */
+.hero {
+  text-align: center;
+  padding: 6rem 2rem 4rem;
+  background: var(--gradient);
+  color: var(--white);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+  background-size: cover;
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  position: relative;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.2);
+}
+
+.hero p {
+  font-size: 1.3rem;
+  position: relative;
+  opacity: 0.95;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Container */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.main-content {
+  min-height: calc(100vh - 400px);
+}
+
+/* Section Styles */
+.section {
+  display: none;
+  animation: fadeInUp 0.6s ease;
+}
+
+.section.active {
+  display: block;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modern Card Design */
+.info-section {
+  background: var(--white);
+  padding: 3rem;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+  border: 1px solid rgba(108, 92, 231, 0.1);
+  transition: all 0.3s ease;
+}
+
+.info-section:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-5px);
+}
+
+.info-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--dark);
+  font-weight: 800;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.info-section h3 {
+  font-size: 1.8rem;
+  margin: 2rem 0 1rem;
+  color: var(--dark);
+  font-weight: 700;
+}
+
+.info-section p {
+  color: var(--gray);
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+/* Modern Buttons */
+.btn {
+  background: var(--gradient);
+  color: var(--white);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(108, 92, 231, 0.5);
+}
+
+.btn:active {
+  transform: translateY(-1px);
+}
+
+.btn-whatsapp {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #FF6B6B 0%, #EE5A6F 100%);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #636E72 0%, #2D3436 100%);
+}
+
+.btn-small {
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+}
+
+/* Gallery Grid */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2.5rem;
+  margin-top: 3rem;
+}
+
+.artwork-card {
+  background: var(--white);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(108, 92, 231, 0.1);
+}
+
+.artwork-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: var(--shadow-hover);
+}
+
+.artwork-image {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.artwork-card:hover .artwork-image {
+  transform: scale(1.1);
+}
+
+.artwork-info {
+  padding: 2rem;
+}
+
+.artwork-category {
+  font-size: 0.85rem;
+  color: var(--primary);
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.artwork-title {
+  font-size: 1.6rem;
+  margin-bottom: 0.8rem;
+  color: var(--dark);
+  font-weight: 700;
+}
+
+.artwork-price {
+  font-size: 1.5rem;
+  color: var(--primary);
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+}
+
+/* Category Pills */
+.category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 2rem; 
+  margin-bottom: 3rem;
+  justify-content: center;
+}
+
+.category-pill {
+  padding: 0.8rem 2rem;
+  background: var(--white);
+  border: 2px solid var(--light);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray);
+}
+
+.category-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(108, 92, 231, 0.2);
+}
+
+.category-pill.active {
+  background: var(--gradient);
+  color: var(--white);
+  border-color: transparent;
+  box-shadow: 0 5px 20px rgba(108, 92, 231, 0.3);
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 2rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+  color: var(--dark);
+  font-size: 1rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: 2px solid var(--light);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: var(--white);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
+}
+
+.form-group textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+/* Footer */
+.footer {
+  background: var(--dark);
+  color: var(--white);
+  padding: 4rem 2rem 2rem;
+  margin-top: 6rem;
+  text-align: center;
+}
+
+.footer a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer a:hover {
+  color: var(--secondary);
+}
+
+/* Loading & Messages */
+.loading {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--gray);
+  font-size: 1.2rem;
+}
+
+.error {
+  background: linear-gradient(135deg, #FFEAA7 0%, #FDCB6E 100%);
+  color: #2D3436;
+  padding: 1.5rem;
+  border-radius: 15px;
+  margin: 2rem 0;
+  border-left: 5px solid #FDCB6E;
+  font-weight: 600;
+}
+
+.success {
+  background: linear-gradient(135deg, #55EFC4 0%, #00B894 100%);
+  color: var(--white);
+  padding: 1.5rem;
+  border-radius: 15px;
+  margin: 2rem 0;
+  border-left: 5px solid #00B894;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+
+  .header ul {
+    gap: 1.5rem;
+  }
+
+  .gallery-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .info-section {
+    padding: 2rem;
+  }
+
+  .info-section h2 {
+    font-size: 2rem;
+  }
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.btn:hover {
+  animation: pulse 1s infinite;
+}
+
+/* Admin Page Spacing Fix */ 
+.admin-page { 
+  margin-top: 3rem !important; 
+} 
+
+/* Google Sign-In Button Container */ 
+.google-signin-container { 
+  display: flex; justify-content: center; align-items: center; min-height: 100px;
+} 
+
+/* Info box styling for admin login */ 
+.admin-info-box { 
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 1.5rem; border-radius: 12px; margin-top: 2rem; border-left: 4px solid #2196f3; 
+} 
+
+.admin-info-box h4 { 
+  color: #2196f3; margin-bottom: 1rem; 
+} 
+
+.admin-info-box ul { 
+  list-style: none; padding-left: 0; 
+} 
+
+.admin-info-box li { 
+  padding: 0.5rem 0; color: #555; 
+} 
+
+.admin-info-box li:before { 
+  content: " || "; color: #2196f3; font-weight: bold; margin-right: 0.5rem; 
+}
+
+/* Mobile Responsive Fixes */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
+  }
+
+  .header ul {
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .header a {
+    padding: 0.5rem;
+  }
+
+  .container {
+    padding: 1rem;
+  }
+
+  .gallery-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .category-pills {
+    gap: 0.5rem;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.5rem;
+  }
+
+  .category-pill {
+    flex-shrink: 0;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+
+  .info-section {
+    padding: 1.5rem;
+  }
+
+  .btn {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  /* Contact QR Code Mobile Fix */
+  .qr-container {
+    width: 100% !important;
+    max-width: 250px !important;
+    margin: 1rem auto !important;
+  }
+
+  /* Admin tabs mobile */
+  .admin-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+  }
+
+  .admin-tabs button {
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    padding: 0.8rem 1.5rem;
+  }
+
+  /* Form inputs mobile */
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Artwork image mobile */
+  .artwork-image-container {
+    height: 300px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .header ul {
+    gap: 0.3rem;
+    font-size: 0.75rem;
+  }
+
+  .category-pill {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .info-section h2 {
+    font-size: 1.8rem;
+  }
+
+  .info-section h3 {
+    font-size: 1.3rem;
+  }
+}
+
+/* Admin Page Spacing */
+.admin-page {
+  margin-top: 3rem !important;
+}
+
+/* Google Login Button Container */
+.google-login-container {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+/* Contact Page Mobile Fixes */
+@media (max-width: 768px) {
+  .info-section h2 {
+    font-size: 1.8rem;
+  }
+
+  .info-section h3 {
+    font-size: 1.3rem;
+  }
+
+  .info-section p {
+    font-size: 1rem;
+  }
+
+  /* QR Code Container Mobile */
+  .qr-code-container {
+    padding: 1.5rem !important;
+    margin: 2rem 1rem !important;
+  }
+
+  /* Contact Cards Mobile */
+  .contact-card {
+    padding: 1.5rem !important;
+  }
+
+  .contact-card h3 {
+    font-size: 1.2rem;
+  }
+
+  .contact-card p {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .hero p {
+    font-size: 0.95rem;
+  }
+
+  .info-section {
+    padding: 1.5rem !important;
+  }
+
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.75rem 1.5rem;
+  }
+}
