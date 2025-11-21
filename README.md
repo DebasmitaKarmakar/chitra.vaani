@@ -47,24 +47,13 @@ ChitraVaani functions both as a **real art business platform** and a **full-stac
 
 ---
 
-## 🧱 System Architecture
+## 2. System Architecture
 
 High-level architecture:
-
-+-------------------------+        +-------------------------+
-|        Frontend         |        |        Backend          |
-|  React + Vite (Client)  | <----> | Node.js + Express (API) |
-|                         |   API  |                         |
-+------------+------------+        +------------+------------+
-             ^                                   |
-             |                                   v
-             |                          +------------------+
-             |                          |     MySQL DB     |
-             +------------------------> | (Art, Orders,    |
-                                        |  Categories,     |
-                                        |  Admin Users)    |
-                                        +------------------+
-
+Frontend <-> Backend -> Database
+    ^                       ^
+    |-----------------------|
+    
 * **Frontend** hosted on Vercel (static site)
 * **Backend** on Vercel serverless functions
 * **Database** using MySQL with secure credentials
@@ -110,30 +99,7 @@ High-level architecture:
 
 ## 5. Folder Structure
 
-chitra.vaani/
-│
-├── client/                # React (Vite) frontend
-│   ├── public/            # Static assets (favicons, images if any)
-│   └── src/
-│       ├── components/    # Shared UI components (Navbar, Cards, etc.)
-│       ├── pages/         # Pages (Home, Gallery, Admin, etc.)
-│       ├── App.jsx        # Main app component
-│       ├── main.jsx       # Entry point
-│       └── ...            # Other utilities, hooks, styles
-│
-├── server/                # Node.js + Express backend
-│   ├── routes/            # Route handlers (artworks, orders, admin, etc.)
-│   ├── db.js              # MySQL connection pool
-│   ├── server.js or index.js
-│   └── ...                # Controllers, middlewares, utils
-│
-├── database_setup.sql     # SQL script to create tables and sample data
-├── .gitignore             # Ignores node_modules, build, env files, etc.
-├── package.json           # May define workspaces or root scripts
-├── package-lock.json
-└── README.md              # Project documentation (this file)
-
----
+as given in the repository
 
 ## 6. Database Design
 
@@ -260,5 +226,6 @@ All `/api/...` routes are deployed as serverless functions automatically. Enviro
 ## Conclusion
 
 ChitraVaani successfully merges handmade creativity with modern web development, demonstrating end-to-end engineering across frontend UI, backend APIs, secure authentication, database design, and cloud deployment. It stands as both a practical business tool and a strong full-stack development showcase.
+
 
 
