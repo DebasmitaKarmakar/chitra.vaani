@@ -1,98 +1,98 @@
-#  ChitraVaani — Handmade Art E-Commerce Platform
+# 🎨 ChitraVaani — Handmade Art E-Commerce Platform
 
 ChitraVaani is a full-stack e-commerce web application focused on **handmade art and custom creations**.  
 It lets visitors browse artworks, view details, and place orders, while the admin can securely manage artworks, categories, and orders through a protected dashboard.
 
-The project is built as a **React (Vite) + Node.js + Express + MySQL** stack and is **deployed on Vercel**.  
+The project is built using **React (Vite) + Node.js + Express + MySQL** and is **deployed on Vercel**.  
 This README documents the **architecture, implementation details, database design, APIs, and deployment steps** for academic / professional evaluation.
 
 ---
 
-##  Live Project
+## 🌐 Live Project
 
-- **Frontend (client):** `https://chitravaani.vercel.app`
-- **Backend (server):** Deployed on **Vercel serverless functions** (API routes exposed under `/api/...`)
-- **Database:** MySQL (configured using `database_setup.sql`)
+- **Frontend:** https://chitravaani.vercel.app
+- **Backend:** Deployed on Vercel serverless functions (`/api/...`)
+- **Database:** MySQL (import via `database_setup.sql`)
 
->  Environment variables (DB credentials, secrets, etc.) are kept in `.env` files and are **not committed** to Git.
+> 💡 Sensitive values like DB credentials and tokens are stored in `.env` files and **not committed** to GitHub.
 
 ---
 
-##  Table of Contents
+## 📚 Table of Contents
 
-1. [Project Overview](#-project-overview)  
-2. [System Architecture](#-system-architecture)  
-3. [Features](#-features)  
-4. [Tech Stack](#-tech-stack)  
-5. [Folder Structure](#-folder-structure)  
-6. [Database Design](#-database-design)  
-7. [Backend Implementation (Node + Express)](#-backend-implementation-node--express)  
-8. [Frontend Implementation (React + Vite)](#-frontend-implementation-react--vite)  
-9. [Environment Variables](#-environment-variables)  
-10. [Running the Project Locally](#-running-the-project-locally)  
-11. [Deployment on Vercel](#-deployment-on-vercel)  
-12. [Security & Best Practices](#-security--best-practices)  
-13. [Future Enhancements](#-future-enhancements)  
+1. [Project Overview](#-1-project-overview)  
+2. [System Architecture](#-2-system-architecture)  
+3. [Features](#-3-features)  
+4. [Tech Stack](#-4-tech-stack)  
+5. [Folder Structure](#-5-folder-structure)  
+6. [Database Design](#-6-database-design)  
+7. [Backend Implementation](#-7-backend-implementation-node--express)  
+8. [Frontend Implementation](#-8-frontend-implementation-react--vite)  
+9. [Environment Variables](#-9-environment-variables)  
+10. [Running Locally](#-10-running-the-project-locally)  
+11. [Deployment on Vercel](#-11-deployment-on-vercel)  
+12. [Security & Best Practices](#-12-security--best-practices)  
+13. [Future Enhancements](#-13-future-enhancements)  
 14. [Conclusion](#-conclusion)
 
 ---
 
 ## 📌 1. Project Overview
 
-ChitraVaani focuses on offering art that carries meaning — not mass-produced items, but carefully crafted pieces made with emotion, discipline, and creativity.  
-The platform allows:
+ChitraVaani focuses on presenting **meaningful handmade artwork**, created with creativity and passion. The platform enables:
 
-- Users to browse art collections, view item details, and place orders.
-- The artist/admin to manage artworks, categories, and orders through a secured dashboard.
-- Orders to be stored in a real database along with customer information and purchase details.
+- 👨‍🎨 Artists/Admins to manage artworks, categories, and orders securely.
+- 🛍 Users to browse, explore, and order unique art pieces.
+- 🗄 Orders to be stored in a real database along with user and artwork info.
 
-ChitraVaani serves as both a **personal art business platform** and a strong demonstration of full-stack development.
-
----
-
-## 🧱 System Architecture
-
-High-level architecture:
-
-```text
-+-------------------------+        +-------------------------+
-|        Frontend         |        |        Backend          |
-|  React + Vite (Client)  | <----> | Node.js + Express (API) |
-|                         |   API  |                         |
-+------------+------------+        +------------+------------+
-             ^                                   |
-             |                                   v
-             |                          +------------------+
-             |                          |     MySQL DB     |
-             +------------------------> | (Art, Orders,    |
-                                        |  Categories,     |
-                                        |  Admin Users)    |
-                                        +------------------+
-- Frontend hosted on **Vercel (static React build)**  
-- Backend handled through **Vercel serverless functions**  
-- Database stored in **MySQL**, accessed securely with environment variables
+ChitraVaani functions both as a **real art business platform** and a **full-stack engineering project**.
 
 ---
 
-##  3. Features
+## 🧱 2. System Architecture
+
++-------------------------+ +-------------------------+
+| Frontend | | Backend |
+| React + Vite (Client) | <----> | Node.js + Express (API) |
+| | API | |
++------------+------------+ +------------+------------+
+^ |
+| v
+| +------------------+
+| | MySQL DB |
++------------------------> | Art, Orders, |
+| Categories, |
+| Admin Users |
++------------------+
+
+yaml
+Copy code
+
+- **Frontend hosted on Vercel (static site)**
+- **Backend on Vercel serverless functions**
+- **Database using MySQL with secure credentials**
+
+---
+
+## 🎨 3. Features
 
 ### 🖼 User Features
-- Browse all artworks with image, title, price, availability, etc.
-- Filter by categories (Sketch, Craft, Digital, etc.)
-- View complete details of each artwork
-- Place orders securely by submitting customer details
+- Browse artworks with images, price, title, and availability
+- Filter by categories (Sketches, Digital Art, Crafts, etc.)
+- View full description of each artwork
+- Secure art order placement with contact details
 
-###  Admin Features
-- Secure login using **bcrypt-hashed password**
+### 🔐 Admin Features
+- Encrypted admin authentication using **bcrypt**
 - Add / edit / delete artworks
-- Manage orders and update order status
-- Manage categories for product organization
+- Manage categories
+- View and update order statuses
 
 ### ⚙ Technical Features
-- REST API with Express
-- SQL relational DB with foreign keys
-- Cloud-ready deployment with environment variables
-- Clean `.gitignore` preventing `node_modules`, `.env`, and build files
+- REST API architecture with Express
+- SQL relational database
+- Cloud-ready configuration via `.env`
+- Clean Git repo (ignores `node_modules`, `.env`, build files)
 
 ---
 
@@ -100,160 +100,158 @@ High-level architecture:
 
 | Layer | Technologies |
 |-------|-------------|
-| **Frontend** | React (Vite), Axios, CSS/Tailwind |
+| **Frontend** | React (Vite), Axios, Tailwind/CSS |
 | **Backend** | Node.js, Express, MySQL2 |
-| **Security** | bcrypt hashing, CORS |
+| **Security** | bcrypt, CORS |
 | **Database** | MySQL |
-| **Deployment** | Vercel (Client + APIs) |
+| **Deployment** | Vercel (Client + Serverless APIs) |
 
 ---
 
-##  5. Folder Structure
+## 📁 5. Folder Structure
+
+```bash
 chitra.vaani/
 │
-├── client/ # React Frontend
-│ ├── public/ # Static assets
-│ └── src/
-│ ├── pages/ # Screens (Admin, Gallery, Home...)
-│ ├── components/ # UI Components (Card, Navbar, etc.)
-│ ├── App.jsx # Main Component
-│ ├── App.jsx # Main Component main.jsx # Root Entry
-│ └── .env
-├── server/ # Backend
-│ ├── db.js # Database Connection Pool
-│ ├── routes/ # API Routes
-│ ├── server.js # Express App
-│ ├── vercel.json # Deployment Config
-│ └── .env
-├── database_setup.sql # Table Creation + Schema
-├── .gitignore # Ignored files
-├── package.json # Dependencies
-└── README.md # Documentation
+├── client/                       # React Frontend
+│   ├── public/                   # Static assets
+│   └── src/
+│       ├── pages/                # Screens (Home, Gallery, Admin...)
+│       ├── components/           # UI Components (Navbar, Cards, Forms...)
+│       ├── App.jsx               # Main React Component
+│       └── main.jsx              # Root Entry
+│
+├── server/                       # Backend
+│   ├── db.js                     # MySQL Connection Pool
+│   ├── routes/                   # API Routes
+│   ├── server.js                 # Express App
+│   └── vercel.json               # Serverless Deploy Config
+│
+├── database_setup.sql            # Database Schema
+├── .gitignore                    # Ignore rules (node_modules, env, build)
+├── package.json                  # Project Dependencies
+└── README.md                     # Documentation
+🗃 6. Database Design
+Table	Description
+admin	Stores admin login credentials (hashed password)
+categories	Stores artwork category names
+artworks	Stores product info (image, price, availability, etc.)
+orders	Stores customer order details
 
-##  6. Database Design
-###  Tables Used
-| Table | Purpose |
-|-------|---------|
-| `admin` | Stores admin login with hashed password |
-| `categories` | Stores art types |
-| `artworks` | Stores each product |
-| `orders` | Stores customer orders |
+🧩 7. Backend Implementation (Node + Express)
+The backend uses Express Router to structure routes for artworks, categories, and admin authentication. Passwords are hashed using bcrypt, ensuring no plain text credentials are stored. The server interacts with MySQL using a connection pool for improved performance. All queries and routes are built using async/await for cleaner logic.
 
-##  7. Backend Implementation
-### highlights
-- Uses Express Router for cleaner API structure
-- bcrypt.compare validates hashed passwords
-- MySQL connection pooling for performance
-- API endpoints use async/await
+✔ Example: Admin Login
+js
+Copy code
+app.post('/api/admin/login', async (req, res) => {
+  const { username, password } = req.body;
+  const [rows] = await pool.query('SELECT * FROM admin WHERE username = ?', [username]);
+  if (!rows.length) return res.status(401).json({ message: 'Invalid user' });
 
-##  8. Frontend Implementation (React + Vite)
-### highlights
-- Fetches data from /api/... endpoints using Axios
-- React Components used for UI separation
-- Hooks used for state management (useState, useEffect)
-- Admin forms submit data via POST
+  const isValid = await bcrypt.compare(password, rows[0].password_hash);
+  if (!isValid) return res.status(401).json({ message: 'Wrong password' });
 
-## 9. Environmental Variables
-ChitraVaani uses environment variables for database connection, authentication, email services, media uploads, and frontend configuration.  
-These values must be placed inside the `.env` file for the **Server** and `.env` or `.env.local` for the **Client**.
+  res.json({ message: 'Login Successful' });
+});
+🎨 8. Frontend Implementation (React + Vite)
+The frontend is built using React with Vite, providing fast build performance. UI is component-based, with separate files for cards, forms, navbars, and pages. All data is fetched via Axios from /api/... endpoints. Admin forms submit data using POST, while public views fetch data using GET.
 
-###  Server `.env` Configuration
-=============== SERVER CONFIGURATION ==================
+✔ Example Fetch Call
+js
+Copy code
+const fetchArtworks = async () => {
+  const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/artworks`);
+  setData(res.data);
+};
+🔐 9. Environment Variables
+📦 Server .env
+ini
+Copy code
 PORT=5000
 NODE_ENV=development
-=============== DATABASE (MySQL) ======================
+
 DB_HOST=your-db-host-url
 DB_USER=your-db-username
 DB_PASSWORD=your-db-password
 DB_NAME=your-database-name
 DB_PORT=your-db-port
-=============== CLOUDINARY (Image Uploads) ============
+
 CLOUD_NAME=your-cloud-name
 CLOUD_API_KEY=your-cloud-api-key
 CLOUD_API_SECRET=your-cloud-api-secret
-=============== SECURITY ==============================
-JWT_SECRET=your-secure-random-jwt-secret
-ADMIN_DEFAULT_PASSWORD=your-initial-admin-password # will be hashed automatically
-=============== FRONTEND ORIGIN (CORS) ================
-CLIENT_URL=https://your-frontend-domain.com
-=============== WHATSAPP & EMAIL SERVICE ==============
-WHATSAPP_NUMBER=your-phone-number-with-country-code
-ARTIST_EMAIL=your-notification-email
-=============== GOOGLE LOGIN ==========================
-GOOGLE_CLIENT_ID=your-google-oauth-id
-ADMIN_EMAILS=email1@gmail.com,email2@gmail.com # comma separated list
-=============== GMAIL SMTP ============================
-GMAIL_APP_PASSWORD=your-app-password-for-mail
 
-###  Client `.env` (Frontend)
+JWT_SECRET=your-secure-random-secret
+ADMIN_DEFAULT_PASSWORD=your-admin-password
 
-VITE_API_URL=https://your-backend-api-url.com/api
-VITE_WHATSAPP_NUMBER=your-whatsapp-number
-VITE_ARTIST_EMAIL=your-public-contact-email
-VITE_INSTAGRAM=@your-instagram-handle
-VITE_GOOGLE_CLIENT_ID=your-google-oauth-id
+CLIENT_URL=https://your-frontend-url.com
 
-###  Security Note
+WHATSAPP_NUMBER=your-phone
+ARTIST_EMAIL=your-email
 
->  **Never share `.env` files publicly.**  
-> These files must be excluded from Git using `.gitignore`.
+GOOGLE_CLIENT_ID=your-google-client-id
+ADMIN_EMAILS=email1@gmail.com,email2@gmail.com
 
- Sensitive values include:
-- Database passwords  
-- JWT secret  
-- Admin password  
-- Cloudinary secrets  
-- Gmail App Password  
+GMAIL_APP_PASSWORD=your-gmail-app-password
+🎨 Client .env
+ini
+Copy code
+VITE_API_URL=https://your-backend-api.com/api
+VITE_WHATSAPP_NUMBER=your-number
+VITE_ARTIST_EMAIL=your-email
+VITE_INSTAGRAM=@your-instagram
+VITE_GOOGLE_CLIENT_ID=your-google-client-id
+⚠ Never commit .env files to GitHub.
 
-🛡 If you accidentally exposed them, **generate new keys and update values immediately.**
-
----
-
-###  Best Practices
-
-- Generate a strong `JWT_SECRET` using online key generators.
-- Avoid hardcoding admin username/password anywhere.
-- Use environment-based switching (`production` vs `development`).
-- Use separate credentials for local testing and deployment.
-
----
-
-## 10. Running the Project Locally
-###Backend
+💻 10. Running the Project Locally
+🔧 Backend
+bash
+Copy code
 cd server
 npm install
 node server.js
-
-###Frontend
+🎨 Frontend
+bash
+Copy code
 cd client
 npm install
 npm run dev
+🚀 11. Deployment on Vercel
+🌐 Frontend
+Imported from GitHub repo
 
-## 11. Deployment on Vercel
-###Frontend
-- Imported directly from GitHub
-- Build Command: npm run build
-- Output: dist/
+Build Command: npm run build
 
-###Backend
-- Use serverless exports:
-   module.exports = app;
+Output Folder: dist
 
- All /api/... routes become backend endpoints on Vercel.
+🛠 Backend (Vercel Serverless)
+js
+Copy code
+module.exports = app;
+All /api/... routes are deployed as functions automatically.
 
-## 12. Security & Best Practices
-- Passwords hashed using bcrypt
-- .env values hidden
-- MySQL queries sanitized
-- CORS enabled
-- GitHub free of node_modules & .env
+🔒 12. Security & Best Practices
+✔ Admin passwords hashed using bcrypt
 
-## 13. Future Enhancements
+✔ Environment secrets stored in .env
 
- Add Razorpay / Stripe Payments
- Add Cart + Multiple-Item Checkout
- Add Admin Analytics Dashboard
+✔ Sanitized MySQL queries to avoid injection
 
-## Conclusion
+✔ CORS enabled
 
-ChitraVaani beautifully merges handmade art with modern web technology, offering a maintainable, scalable, and secure e-commerce solution. It demonstrates strong understanding of frontend development, backend APIs, database design, authentication, and deployment.
+✔ GitHub clean (no node_modules, .env, dist/, etc.)
+
+🔮 13. Future Enhancements
+💳 Integrate Razorpay / Stripe
+
+🛒 Add full shopping cart system
+
+📊 Admin analytics dashboard
+
+📨 Email order confirmations
+
+⭐ Add product reviews and ratings
+
+🏁 Conclusion
+ChitraVaani merges handmade creativity with modern web development, demonstrating end-to-end engineering across frontend UI, backend APIs, secure authentication, database design, and cloud deployment.
+It stands as both a practical business tool and a strong full-stack development showcase.
