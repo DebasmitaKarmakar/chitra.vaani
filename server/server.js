@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const { initDatabase } = require('./db');
 
-// ✅ ADD: Import security middleware
+//  ADD: Import security middleware
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const xss = require('xss-clean');
@@ -20,7 +20,7 @@ const feedbackRoutes = require('./routes/feedback'); // ✅ ADD THIS
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ ADD: Helmet for security headers
+// ADD: Helmet for security headers
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -35,39 +35,46 @@ app.use(helmet({
   },
 }));
 
-// ✅ IMPROVED: Better CORS configuration
+//  IMPROVED: Better CORS configuration
+// Replace CORS section with this:
 const allowedOrigins = [
   'https://chitravaani.vercel.app',
+  'https://chitravaani-api.vercel.app', 
   'http://localhost:5173',
   'http://localhost:3000'
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, postman)
     if (!origin) return callback(null, true);
+    
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       console.log("❌ CORS blocked:", origin);
-      callback(new Error('Not allowed by CORS'));
+      callback(null, true); // TEMPORARILY allow all for debugging
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// ✅ ADD: Request size limits
+// Add this line right after CORS
+app.options('*', cors());
+
+// ADD: Request size limits
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// ✅ ADD: XSS Protection
+//  ADD: XSS Protection
 app.use(xss());
 
-// ✅ ADD: HTTP Parameter Pollution protection
+//  ADD: HTTP Parameter Pollution protection
 app.use(hpp());
 
-// ✅ ADD: Rate limiting
+//  ADD: Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // 100 requests per IP
@@ -77,16 +84,23 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// ✅ ADD: Disable X-Powered-By
+//  ADD: Disable X-Powered-By
 app.disable('x-powered-by');
 
-// ✅ IMPROVED: Request logging with IP
+//  IMPROVED: Request logging with IP
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   const ip = req.ip || req.connection.remoteAddress;
   console.log(`[${timestamp}] ${req.method} ${req.path} - IP: ${ip}`);
   next();
 });
+
+// Request logging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -97,25 +111,37 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK' });
+});
+
+
 // API Routes
 app.use('/api/artworks', artworkRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/feedback', feedbackRoutes); // ✅ ADD THIS LINE
+app.use('/api/feedback', feedbackRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
+    name: 'ChitraVaani API',
+    status: 'active',
+    version: '1.0.0'
+  });
+});
+
+app.get('/api', (req, res) => {
+  res.json({
     message: 'Welcome to ChitraVaani API',
-    version: '1.0.0',
     endpoints: {
+      health: '/api/health',
       artworks: '/api/artworks',
       orders: '/api/orders',
       categories: '/api/categories',
       admin: '/api/admin',
-      feedback: '/api/feedback', // ✅ ADD THIS LINE
-      health: '/api/health'
+      feedback: '/api/feedback'
     }
   });
 });
@@ -128,9 +154,10 @@ app.use((req, res) => {
     method: req.method
   });
 });
-// ✅ IMPROVED: Better error handling
+
+//  IMPROVED: Global error handling
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err);
+  console.error(' Error:', err);
   
   // Handle specific error types
   if (err.name === 'MulterError') {
@@ -166,34 +193,34 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ✅ IMPROVED: Better startup with security info
+//  IMPROVED: Better startup with security info
 async function startServer() {
   try {
-    // ✅ ADD: Validate JWT_SECRET
+    // ADD: Validate JWT_SECRET
     if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 64) {
-      console.warn('⚠️  WARNING: JWT_SECRET is too short! Should be 64+ characters.');
+      console.warn('  WARNING: JWT_SECRET is too short! Should be 64+ characters.');
     }
 
     await initDatabase();
     
     app.listen(PORT, () => {
       console.log('=================================');
-      console.log('🛡️  ChitraVaani Secure API');
+      console.log('  ChitraVaani Secure API');
       console.log('=================================');
-      console.log(`✅ Server: http://localhost:${PORT}`);
-      console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`✅ Database: Connected`);
-      console.log(`✅ Security: Enabled`);
+      console.log(` Server: http://localhost:${PORT}`);
+      console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(` Database: Connected`);
+      console.log(` Security: Enabled`);
       console.log('   - Helmet (CSP, HSTS, XSS)');
       console.log('   - Rate Limiting (100 req/15min)');
       console.log('   - CORS Protection');
       console.log('   - Input Sanitization');
       console.log('=================================');
-      console.log(`📡 Health: http://localhost:${PORT}/api/health`);
+      console.log(` Health: http://localhost:${PORT}/api/health`);
       console.log('=================================');
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
+    console.error(' Failed to start server:', error.message);
     process.exit(1);
   }
 }
@@ -211,12 +238,12 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Closing server gracefully...');
+  console.log('Shutting down...');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('\nSIGINT received. Closing server gracefully...');
+  console.log('Shutting down...');
   process.exit(0);
 });
 

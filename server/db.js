@@ -18,7 +18,11 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   connectTimeout: 60000,
-  ssl: {
+  
+  //  CRITICAL FIX FOR VERCEL:
+  ssl: process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: true
+  } : {
     rejectUnauthorized: false
   }
 });

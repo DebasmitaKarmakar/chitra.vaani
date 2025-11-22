@@ -1,22 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const { promisePool } = require('../db');
+const jwt = require('jsonwebtoken');
 
-// Middleware to verify JWT token
+// Simple token verification
 const verifyToken = (req, res, next) => {
-  const jwt = require('jsonwebtoken');
-  const token = req.headers['authorization']?.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'Access denied. No token provided.' });
-  }
-
   try {
+    const token = req.headers['authorization']?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.admin = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: 'Invalid token' });
   }
 };
 
@@ -34,7 +32,7 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// Create new feedback - NO EMAIL, JUST SAVE
+// Create new feedback - NO RATE LIMIT
 router.post('/', async (req, res) => {
   try {
     const {
@@ -45,14 +43,14 @@ router.post('/', async (req, res) => {
       message
     } = req.body;
 
-    // Validate required fields
+    // Basic validation
     if (!customer_name || !customer_email || !feedback_type || !rating || !message) {
       return res.status(400).json({ 
         error: 'Missing required fields' 
       });
     }
 
-    // Basic email validation (allow any email, not just Gmail)
+    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(customer_email)) {
       return res.status(400).json({ 
@@ -60,21 +58,14 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Validate rating (1-5)
+    // Validate rating
     if (rating < 1 || rating > 5) {
       return res.status(400).json({ 
         error: 'Rating must be between 1 and 5' 
       });
     }
 
-    // Validate message length
-    if (message.length > 1000) {
-      return res.status(400).json({ 
-        error: 'Message must be 1000 characters or less' 
-      });
-    }
-
-    // Insert feedback - simple save to database
+    // Insert feedback
     const [result] = await promisePool.query(
       `INSERT INTO feedback 
        (customer_name, customer_email, feedback_type, rating, message, status) 
@@ -82,7 +73,7 @@ router.post('/', async (req, res) => {
       [customer_name, customer_email, feedback_type, rating, message]
     );
 
-    console.log('✅ Feedback saved successfully:', result.insertId);
+    console.log('✅ Feedback saved:', result.insertId);
 
     res.status(201).json({
       message: 'Feedback submitted successfully! Thank you for your input.',
@@ -91,7 +82,9 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error saving feedback:', error);
-    res.status(500).json({ error: 'Failed to submit feedback. Please try again.' });
+    res.status(500).json({ 
+      error: 'Failed to submit feedback. Please try again.' 
+    });
   }
 });
 
@@ -99,16 +92,22 @@ router.post('/', async (req, res) => {
 router.patch('/:id/status', verifyToken, async (req, res) => {
   try {
     const { status } = req.body;
+    const feedbackId = parseInt(req.params.id);
 
-    if (!['New', 'In Review', 'Resolved', 'Archived'].includes(status)) {
+    if (isNaN(feedbackId) || feedbackId < 1) {
+      return res.status(400).json({ error: 'Invalid feedback ID' });
+    }
+
+    const validStatuses = ['New', 'In Review', 'Resolved', 'Archived'];
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({ 
-        error: 'Invalid status. Must be: New, In Review, Resolved, or Archived' 
+        error: 'Invalid status' 
       });
     }
 
     const [result] = await promisePool.query(
-      'UPDATE feedback SET status = ? WHERE id = ?',
-      [status, req.params.id]
+      'UPDATE feedback SET status = ?, updated_at = NOW() WHERE id = ?',
+      [status, feedbackId]
     );
 
     if (result.affectedRows === 0) {
@@ -126,9 +125,15 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
 // Delete feedback (admin only)
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
+    const feedbackId = parseInt(req.params.id);
+
+    if (isNaN(feedbackId) || feedbackId < 1) {
+      return res.status(400).json({ error: 'Invalid feedback ID' });
+    }
+
     const [result] = await promisePool.query(
       'DELETE FROM feedback WHERE id = ?',
-      [req.params.id]
+      [feedbackId]
     );
 
     if (result.affectedRows === 0) {
@@ -144,7 +149,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
 });
 
 // Get feedback statistics (admin only)
-router.get('/stats/summary', secureVerifyToken, async (req, res) => {
+router.get('/stats/summary', verifyToken, async (req, res) => {
   try {
     const [stats] = await promisePool.query(`
       SELECT 
@@ -165,7 +170,6 @@ router.get('/stats/summary', secureVerifyToken, async (req, res) => {
       FROM feedback
     `);
 
-    // Ensure all values are numbers
     const result = {
       total_feedback: parseInt(stats[0].total_feedback) || 0,
       average_rating: parseFloat(stats[0].average_rating) || 0,
@@ -186,7 +190,6 @@ router.get('/stats/summary', secureVerifyToken, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error fetching feedback stats:', error);
-    // Return empty stats instead of error
     res.json({
       total_feedback: 0,
       average_rating: 0,
