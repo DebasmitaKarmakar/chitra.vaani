@@ -151,5 +151,6 @@ async function generateOrderExcel(orders) {
 
 module.exports = {
   generateArtworkExcel,
-  generateOrderExcel
+  generateOrderExcel,
+  generateFeedbackExcel
 };

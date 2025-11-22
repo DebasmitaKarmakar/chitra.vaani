@@ -344,6 +344,7 @@ router.get('/export/feedback', verifyToken, async (req, res) => {
   try {
     console.log(' Exporting feedback to Excel...');
     
+    // Get all feedback
     const [feedback] = await promisePool.query(`
       SELECT * FROM feedback
       ORDER BY created_at DESC
@@ -351,15 +352,18 @@ router.get('/export/feedback', verifyToken, async (req, res) => {
 
     console.log(` Found ${feedback.length} feedback entries`);
 
+    // If no feedback, return error
     if (feedback.length === 0) {
       return res.status(404).json({ 
         error: 'No feedback found to export' 
       });
     }
 
+    // Generate Excel
     const { generateFeedbackExcel } = require('../excelExport');
     const buffer = await generateFeedbackExcel(feedback);
 
+    // Send file
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename=feedback_${Date.now()}.xlsx`);
     res.send(buffer);
