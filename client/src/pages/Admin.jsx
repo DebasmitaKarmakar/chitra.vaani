@@ -915,7 +915,7 @@ function Admin() {
               <p>Total Feedback</p>
             </div>
             <div style={{ background: '#fff3cd', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-              <h3>{feedbackStats.average_rating ? feedbackStats.average_rating.toFixed(1) : '0.0'} ⭐</h3>
+              <h3>{feedbackStats.average_rating ? feedbackStats.average_rating.toFixed(1) : '0.0'}</h3>
               <p>Avg Rating</p>
             </div>
             <div style={{ background: '#d4edda', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
@@ -943,7 +943,7 @@ function Admin() {
             </select>
 
             <button className="btn" onClick={handleExportFeedback} style={{ marginLeft: 'auto' }}>
-              📥 Export Feedback to Excel
+               Export Feedback to Excel
             </button>
           </div>
 
@@ -987,8 +987,7 @@ function Admin() {
                     color: '#0369a1',
                     fontWeight: 600
                   }}>
-                    {item.feedback_type.replace(/_/g, ' ').toUpperCase()}
-                  </div>
+                    {(item.feedback_type || 'unknown').replace(/_/g, ' ').toUpperCase()}                  </div>
 
                   <p style={{ marginBottom: '0.5rem' }}><strong>From:</strong> {item.customer_name}</p>
                   <p style={{ marginBottom: '0.5rem' }}><strong>Email:</strong> {item.customer_email}</p>
@@ -1067,11 +1066,11 @@ function Admin() {
           <div style={{ background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)', padding: '2rem', borderRadius: '12px', marginTop: '2rem', border: '2px solid #ff9800' }}>
             <h3>Export Tips</h3>
             <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem' }}>
-              <li style={{ padding: '0.5rem 0' }}>✅ Excel files include all data fields</li>
-              <li style={{ padding: '0.5rem 0' }}>✅ Orders are color-coded by status</li>
-              <li style={{ padding: '0.5rem 0' }}>✅ Feedback includes star ratings and statistics</li>
-              <li style={{ padding: '0.5rem 0' }}>✅ Perfect for business records and analysis</li>
-              <li style={{ padding: '0.5rem 0' }}>✅ Compatible with Excel, Google Sheets, LibreOffice</li>
+              <li style={{ padding: '0.5rem 0' }}> Excel files include all data fields</li>
+              <li style={{ padding: '0.5rem 0' }}> Orders are color-coded by status</li>
+              <li style={{ padding: '0.5rem 0' }}> Feedback includes star ratings and statistics</li>
+              <li style={{ padding: '0.5rem 0' }}> Perfect for business records and analysis</li>
+              <li style={{ padding: '0.5rem 0' }}> Compatible with Excel, Google Sheets, LibreOffice</li>
             </ul>
           </div>
         </div>
