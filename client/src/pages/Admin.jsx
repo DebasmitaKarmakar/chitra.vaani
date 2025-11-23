@@ -386,27 +386,69 @@ function Admin() {
     }
   }
 
-  const handleExportFeedback = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/admin/export/feedback`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob'
-      })
+// Replace your handleExportFeedback function in Admin.jsx
 
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `feedback_${Date.now()}.xlsx`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
+const handleExportFeedback = async () => {
+  try {
+    console.log(' Starting feedback export...');
+    console.log(' API URL:', API_URL);
+    console.log(' Token exists:', !!token);
 
-      alert('Feedback exported successfully!')
-    } catch (error) {
-      console.error('Error exporting feedback:', error)
-      alert('Failed to export feedback')
+    const response = await axios.get(`${API_URL}/admin/export/feedback`, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      responseType: 'blob',
+      timeout: 30000 // 30 second timeout
+    });
+
+    console.log(' Response received:', response.status);
+    console.log(' Content type:', response.headers['content-type']);
+
+    // Check if response is actually an error (sometimes errors come as JSON blobs)
+    if (response.data.type === 'application/json') {
+      const text = await response.data.text();
+      const error = JSON.parse(text);
+      throw new Error(error.error || 'Export failed');
     }
+
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `feedback_${Date.now()}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    alert(' Feedback exported successfully!');
+    console.log(' Export complete');
+
+  } catch (error) {
+    console.error(' Error exporting feedback:', error);
+    console.error(' Error response:', error.response?.data);
+    console.error(' Error status:', error.response?.status);
+    
+    // Better error message
+    let errorMessage = 'Failed to export feedback. ';
+    
+    if (error.response?.status === 404) {
+      errorMessage += 'No feedback found to export.';
+    } else if (error.response?.status === 401) {
+      errorMessage += 'Please login again.';
+    } else if (error.response?.status === 500) {
+      errorMessage += 'Server error. Check if backend is running.';
+    } else if (error.message.includes('Network Error')) {
+      errorMessage += 'Cannot connect to server. Check your internet connection.';
+    } else {
+      errorMessage += error.message || 'Unknown error';
+    }
+    
+    alert('x' + errorMessage);
   }
+};
 
   const filteredOrders = filterStatus === 'all' 
     ? orders 
@@ -948,9 +990,6 @@ function Admin() {
         <option value="Archived">Archived</option>
       </select>
 
-      <button className="btn" onClick={handleExportFeedback} style={{ marginLeft: 'auto' }}>
-        📥 Export Feedback to Excel
-      </button>
     </div>
 
     {/* Feedback List */}

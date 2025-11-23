@@ -340,40 +340,70 @@ router.get('/export/artworks', verifyToken, async (req, res) => {
 });
 
 //  Export Feedback to Excel
+// Add this to routes/admin.js (after orders/artworks export)
+
+// Export Feedback to Excel
 router.get('/export/feedback', verifyToken, async (req, res) => {
   try {
-    console.log(' Exporting feedback to Excel...');
+    console.log(' Starting feedback export...');
     
-    // Get all feedback
+    // Get all feedback from database
     const [feedback] = await promisePool.query(`
-      SELECT * FROM feedback
+      SELECT 
+        id,
+        customer_name,
+        customer_email,
+        feedback_type,
+        rating,
+        message,
+        status,
+        created_at,
+        updated_at
+      FROM feedback
       ORDER BY created_at DESC
     `);
 
     console.log(` Found ${feedback.length} feedback entries`);
 
-    // If no feedback, return error
+    // If no feedback exists
     if (feedback.length === 0) {
+      console.log(' No feedback found');
       return res.status(404).json({ 
-        error: 'No feedback found to export' 
+        error: 'No feedback found to export. Submit some feedback first!' 
       });
     }
 
-    // Generate Excel
+    // Import the Excel generation function
     const { generateFeedbackExcel } = require('../excelExport');
+    
+    // Generate Excel file
+    console.log(' Generating Excel file...');
     const buffer = await generateFeedbackExcel(feedback);
 
-    // Send file
+    if (!buffer) {
+      throw new Error('Failed to generate Excel file');
+    }
+
+    console.log(' Excel file generated successfully');
+
+    // Set headers for file download
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=feedback_${Date.now()}.xlsx`);
+    res.setHeader('Content-Disposition', `attachment; filename=feedback_export_${Date.now()}.xlsx`);
+    res.setHeader('Content-Length', buffer.length);
+
+    // Send the file
     res.send(buffer);
 
     console.log(' Feedback exported successfully');
+
   } catch (error) {
     console.error(' Error exporting feedback:', error);
+    console.error(' Stack:', error.stack);
+    
     res.status(500).json({ 
       error: 'Failed to export feedback',
-      details: error.message 
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
