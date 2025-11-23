@@ -604,62 +604,182 @@ const handleExportFeedback = async () => {
         ))}
       </div>
 
-      {activeTab === 'dashboard' && (
-        <div className="info-section">
-          <h2>Dashboard Overview</h2>
-          {dashboardStats ? (
-            <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                <div style={{ background: '#e3f2fd', padding: '1.5rem', borderRadius: '12px', textAlign: 'center' }}>
-                  <h3 style={{ fontSize: '2rem', margin: 0 }}>{dashboardStats.orders.total_orders}</h3>
-                  <p>Total Orders</p>
-                </div>
-                <div style={{ background: '#fff3cd', padding: '1.5rem', borderRadius: '12px', textAlign: 'center' }}>
-                  <h3 style={{ fontSize: '2rem', margin: 0 }}>{dashboardStats.orders.pending_orders}</h3>
-                  <p>Pending Orders</p>
-                </div>
-                <div style={{ background: '#d4edda', padding: '1.5rem', borderRadius: '12px', textAlign: 'center' }}>
-                  <h3 style={{ fontSize: '2rem', margin: 0 }}>{dashboardStats.orders.completed_orders}</h3>
-                  <p>Completed Orders</p>
-                </div>
-                <div style={{ background: '#f8d7da', padding: '1.5rem', borderRadius: '12px', textAlign: 'center' }}>
-                  <h3 style={{ fontSize: '2rem', margin: 0 }}>{dashboardStats.artworks.total_artworks}</h3>
-                  <p>Total Artworks</p>
+{activeTab === 'dashboard' && (
+  <div className="info-section">
+    <h2>Dashboard Overview</h2>
+    {dashboardStats ? (
+      <>
+        {/* Updated Stats Grid - Removed Completed Orders, Added Feedback */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+          {/* Total Orders */}
+          <div style={{ background: '#e3f2fd', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#1976d2' }}>{dashboardStats.orders.total_orders}</h3>
+            <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Total Orders</p>
+          </div>
+
+          {/* Pending Orders */}
+          <div style={{ background: '#fff3cd', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#856404' }}>{dashboardStats.orders.pending_orders}</h3>
+            <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Pending Orders</p>
+          </div>
+
+          {/* Total Artworks */}
+          <div style={{ background: '#f8d7da', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#721c24' }}>{dashboardStats.artworks.total_artworks}</h3>
+            <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Total Artworks</p>
+          </div>
+
+          {/* NEW: Total Feedback */}
+          <div style={{ background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#0369a1' }}>
+              {feedbackStats?.total_feedback || 0}
+            </h3>
+            <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Customer Feedback</p>
+          </div>
+        </div>
+
+        {/* Additional Insights Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+          {/* Completed Orders - Smaller card */}
+          <div style={{ background: '#d4edda', padding: '1rem', borderRadius: '10px', textAlign: 'center', border: '2px solid #c3e6cb' }}>
+            <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#155724' }}>{dashboardStats.orders.completed_orders}</h4>
+            <p style={{ margin: '0.3rem 0 0 0', color: '#155724', fontSize: '0.9rem', fontWeight: 500 }}>Completed Orders</p>
+          </div>
+
+          {/* Average Feedback Rating */}
+          <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', padding: '1rem', borderRadius: '10px', textAlign: 'center', border: '2px solid #fcd34d' }}>
+            <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#92400e' }}>
+              {feedbackStats?.average_rating ? `${feedbackStats.average_rating.toFixed(1)} ★` : 'N/A'}
+            </h4>
+            <p style={{ margin: '0.3rem 0 0 0', color: '#92400e', fontSize: '0.9rem', fontWeight: 500 }}>Avg Feedback Rating</p>
+          </div>
+
+          {/* New Feedback */}
+          <div style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)', padding: '1rem', borderRadius: '10px', textAlign: 'center', border: '2px solid #a5b4fc' }}>
+            <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#3730a3' }}>
+              {feedbackStats?.new_feedback || 0}
+            </h4>
+            <p style={{ margin: '0.3rem 0 0 0', color: '#3730a3', fontSize: '0.9rem', fontWeight: 500 }}>New Feedback</p>
+          </div>
+
+          {/* Total Categories */}
+          <div style={{ background: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', padding: '1rem', borderRadius: '10px', textAlign: 'center', border: '2px solid #f9a8d4' }}>
+            <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#831843' }}>
+              {dashboardStats.categories || 0}
+            </h4>
+            <p style={{ margin: '0.3rem 0 0 0', color: '#831843', fontSize: '0.9rem', fontWeight: 500 }}>Art Categories</p>
+          </div>
+        </div>
+
+        {/* Quick Stats Banner */}
+        <div style={{ 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+          padding: '1.5rem', 
+          borderRadius: '12px', 
+          marginBottom: '2rem',
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-around',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+              {feedbackStats?.five_star || 0}
+            </div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>5-Star Reviews</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+              {feedbackStats?.appreciation_feedback || 0}
+            </div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Appreciations</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+              {feedbackStats?.resolved_feedback || 0}
+            </div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Resolved Issues</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+              {((dashboardStats.orders.completed_orders / (dashboardStats.orders.total_orders || 1)) * 100).toFixed(0)}%
+            </div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Completion Rate</div>
+          </div>
+        </div>
+
+        <h3 style={{ marginBottom: '1rem', color: '#333' }}>Recent Orders</h3>
+        {dashboardStats.recentOrders.length > 0 ? (
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            {dashboardStats.recentOrders.map(order => (
+              <div key={order.id} style={{ 
+                background: '#f9f7f5', 
+                padding: '1.5rem', 
+                borderRadius: '8px', 
+                borderLeft: '4px solid #8b7355',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                transition: 'transform 0.2s',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(5px)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(0)'}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <strong style={{ fontSize: '1.1rem' }}>#{order.id} - {order.order_type.toUpperCase()}</strong>
+                    <p style={{ margin: '0.5rem 0', color: '#666' }}>
+                      {order.customer_name} • {new Date(order.created_at).toLocaleDateString()}
+                    </p>
+                    {order.artwork_title && (
+                      <p style={{ color: '#555', margin: '0.3rem 0' }}>
+                         {order.artwork_title}
+                      </p>
+                    )}
+                  </div>
+                  <span style={{ 
+                    padding: '0.4rem 1rem', 
+                    borderRadius: '20px', 
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    background: order.status === 'Completed' ? '#d4edda' : 
+                               order.status === 'Pending' ? '#fff3cd' : '#f8d7da',
+                    color: order.status === 'Completed' ? '#155724' : 
+                           order.status === 'Pending' ? '#856404' : '#721c24'
+                  }}>
+                    {order.status}
+                  </span>
                 </div>
               </div>
-
-              <h3>Recent Orders</h3>
-              {dashboardStats.recentOrders.length > 0 ? (
-                <div style={{ display: 'grid', gap: '1rem' }}>
-                  {dashboardStats.recentOrders.map(order => (
-                    <div key={order.id} style={{ background: '#f9f7f5', padding: '1.5rem', borderRadius: '8px', borderLeft: '4px solid #8b7355' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <strong>#{order.id} - {order.order_type.toUpperCase()}</strong>
-                        <span style={{ 
-                          padding: '0.3rem 0.8rem', 
-                          borderRadius: '12px', 
-                          fontSize: '0.85rem',
-                          background: order.status === 'Completed' ? '#d4edda' : order.status === 'Pending' ? '#fff3cd' : '#f8d7da'
-                        }}>
-                          {order.status}
-                        </span>
-                      </div>
-                      <p style={{ margin: '0.5rem 0', color: '#666' }}>
-                        {order.customer_name} - {new Date(order.created_at).toLocaleDateString()}
-                      </p>
-                      {order.artwork_title && <p style={{ color: '#555' }}>Artwork: {order.artwork_title}</p>}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ color: '#666' }}>No recent orders</p>
-              )}
-            </>
-          ) : (
-            <div className="loading">Loading dashboard...</div>
-          )}
-        </div>
-      )} 
+            ))}
+          </div>
+        ) : (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '3rem', 
+            background: '#f9f7f5', 
+            borderRadius: '12px',
+            color: '#666'
+          }}>
+            <p style={{ fontSize: '1.2rem', margin: 0 }}>📦 No recent orders</p>
+            <p style={{ fontSize: '0.9rem', marginTop: '0.5rem', color: '#999' }}>
+              New orders will appear here
+            </p>
+          </div>
+        )}
+      </>
+    ) : (
+      <div className="loading" style={{ 
+        textAlign: 'center', 
+        padding: '4rem',
+        fontSize: '1.2rem',
+        color: '#8b7355' 
+      }}>
+        Loading dashboard...
+      </div>
+    )}
+  </div>
+)} 
 
       {activeTab === 'artworks' && (
         <div className="info-section">
