@@ -170,14 +170,27 @@ function Admin() {
         }
       }
 
-      if (activeTab === 'dashboard') {
-        const response = await axios.get(`${API_URL}/admin/dashboard/stats`, { headers })
-        setDashboardStats(response.data)
-      }
-    } catch (error) {
-      console.error('Error loading dashboard data:', error)
+    if (activeTab === 'dashboard') {
+      const [dashboardRes, feedbackStatsRes] = await Promise.all([
+        axios.get(`${API_URL}/admin/dashboard/stats`, { headers }),
+        axios.get(`${API_URL}/feedback/stats/summary`, { headers }).catch(() => ({
+          data: {
+            total_feedback: 0,
+            average_rating: 0,
+            new_feedback: 0,
+            resolved_feedback: 0,
+            five_star: 0,
+            appreciation_feedback: 0
+          }
+        }))
+      ])
+      setDashboardStats(dashboardRes.data)
+      setFeedbackStats(feedbackStatsRes.data) //  This line is critical!
     }
+  } catch (error) {
+    console.error('Error loading dashboard data:', error)
   }
+}
 
   const handleFileSelect = (e) => {
     setSelectedFiles(Array.from(e.target.files))
