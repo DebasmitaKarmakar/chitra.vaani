@@ -1107,7 +1107,7 @@ const handleExportFeedback = async () => {
     ) : (
       <div style={{ textAlign: 'center', padding: '3rem', background: '#f9f7f5', borderRadius: '12px' }}>
         <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '1rem' }}>
-          📭 No feedback yet
+           No feedback yet
         </p>
         <p style={{ color: '#999' }}>
           Feedback submissions will appear here
