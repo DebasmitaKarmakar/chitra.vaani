@@ -961,7 +961,7 @@ const handleExportFeedback = async () => {
         <h3>
           {feedbackStats && typeof feedbackStats.average_rating === 'number' 
             ? feedbackStats.average_rating.toFixed(1) 
-            : '0.0'} ⭐
+            : '0.0'} 
         </h3>
         <p>Avg Rating</p>
       </div>
