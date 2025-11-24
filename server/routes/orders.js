@@ -1,10 +1,86 @@
 const express = require('express');
 const router = express.Router();
 const { promisePool } = require('../db');
-const { sendOrderNotificationToAdmin, sendOrderConfirmationToCustomer } = require('../emailService');
+const { requireAdmin } = require('../middleware/auth');
+const { validate, sanitizeOrder } = require('../middleware/validation');
 
-// Get all orders
-router.get('/', async (req, res) => {
+// PUBLIC: Create new order (with validation based on order type)
+router.post('/', async (req, res) => {
+  try {
+    const { order_type } = req.body;
+
+    // Validate based on order type
+    let validationSchema = 'regularOrder';
+    if (order_type === 'custom') {
+      validationSchema = 'customOrder';
+    } else if (order_type === 'bulk') {
+      validationSchema = 'bulkOrder';
+    }
+
+    // Manual validation since we can't use middleware dynamically
+    const Joi = require('joi');
+    const { schemas } = require('../middleware/validation');
+    const schema = schemas[validationSchema];
+
+    const { error, value } = schema.validate(req.body, {
+      abortEarly: false,
+      stripUnknown: true
+    });
+
+    if (error) {
+      const errors = error.details.map(detail => ({
+        field: detail.path.join('.'),
+        message: detail.message
+      }));
+
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: errors
+      });
+    }
+
+    const {
+      artwork_id,
+      customer_name,
+      customer_email,
+      customer_phone,
+      delivery_address,
+      order_details
+    } = value;
+
+    // Insert order
+    const [result] = await promisePool.query(
+      `INSERT INTO orders 
+       (order_type, artwork_id, customer_name, customer_email, customer_phone, 
+        delivery_address, order_details, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')`,
+      [
+        order_type,
+        artwork_id || null,
+        customer_name,
+        customer_email,
+        customer_phone || null,
+        delivery_address || null,
+        JSON.stringify(order_details)
+      ]
+    );
+
+    res.status(201).json({
+      message: 'Order created successfully',
+      orderId: result.insertId
+    });
+
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ 
+      error: 'Failed to create order',
+      details: error.message 
+    });
+  }
+});
+
+// ADMIN ONLY: Get all orders
+router.get('/', requireAdmin, async (req, res) => {
   try {
     const { status, type } = req.query;
     
@@ -33,8 +109,8 @@ router.get('/', async (req, res) => {
     // Parse order_details JSON
     const formattedOrders = orders.map(order => ({
       ...order,
-      order_details: typeof order.order_details === 'string'
-        ? JSON.parse(order.order_details)
+      order_details: typeof order.order_details === 'string' 
+        ? JSON.parse(order.order_details) 
         : order.order_details
     }));
 
@@ -45,8 +121,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get single order
-router.get('/:id', async (req, res) => {
+// ADMIN ONLY: Get single order
+router.get('/:id', requireAdmin, async (req, res) => {
   try {
     const [orders] = await promisePool.query(
       `SELECT o.*, a.title as artwork_title 
@@ -74,85 +150,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create new order
-router.post('/', async (req, res) => {
-  try {
-    const {
-      order_type,
-      artwork_id,
-      customer_name,
-      customer_email,
-      customer_phone,
-      delivery_address,
-      order_details
-    } = req.body;
-
-    // Validate required fields
-    if (!order_type || !customer_name || !customer_email || !order_details) {
-      return res.status(400).json({ 
-        error: 'Missing required fields: order_type, customer_name, customer_email, order_details' 
-      });
-    }
-
-    // Validate email is Gmail
-    if (!customer_email.toLowerCase().endsWith('@gmail.com')) {
-      return res.status(400).json({ 
-        error: 'Only Gmail addresses are accepted for orders' 
-      });
-    }
-
-    // Insert order
-    const [result] = await promisePool.query(
-      `INSERT INTO orders 
-       (order_type, artwork_id, customer_name, customer_email, customer_phone, 
-        delivery_address, order_details, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')`,
-      [
-        order_type,
-        artwork_id || null,
-        customer_name,
-        customer_email,
-        customer_phone || null,
-        delivery_address || null,
-        JSON.stringify(order_details)
-      ]
-    );
-
-    const orderId = result.insertId;
-
-    // Prepare order data for emails
-    const orderData = {
-      id: orderId,
-      order_type,
-      customer_name,
-      customer_email,
-      customer_phone,
-      delivery_address,
-      order_details
-    };
-
-    // Send emails (in background, don't wait)
-    console.log(' Sending email notifications...');
-    sendOrderNotificationToAdmin(orderData).catch(err => 
-      console.error('Email to admin failed:', err.message)
-    );
-    sendOrderConfirmationToCustomer(orderData).catch(err => 
-      console.error('Email to customer failed:', err.message)
-    );
-
-    res.status(201).json({
-      message: 'Order created successfully',
-      id: orderId
-    });
-
-  } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({ error: 'Failed to create order' });
-  }
-});
-
-// Update order status
-router.patch('/:id/status', async (req, res) => {
+// ADMIN ONLY: Update order status
+router.patch('/:id/status', requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
 
@@ -179,8 +178,8 @@ router.patch('/:id/status', async (req, res) => {
   }
 });
 
-// Delete order
-router.delete('/:id', async (req, res) => {
+// ADMIN ONLY: Delete order
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const [result] = await promisePool.query(
       'DELETE FROM orders WHERE id = ?',
@@ -199,8 +198,8 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Get order statistics
-router.get('/stats/summary', async (req, res) => {
+// ADMIN ONLY: Get order statistics
+router.get('/stats/summary', requireAdmin, async (req, res) => {
   try {
     const [stats] = await promisePool.query(`
       SELECT 

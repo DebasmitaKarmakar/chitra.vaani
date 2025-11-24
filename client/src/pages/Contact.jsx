@@ -2,6 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://chitravaani-api.vercel.app/api'
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '919436357001'
 
 function Contact() {
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '919436357001'
@@ -9,14 +10,17 @@ function Contact() {
   const instagram = import.meta.env.VITE_INSTAGRAM || '@chitra.vaani'
 
   const [feedbackData, setFeedbackData] = useState({
-    name: '',
-    email: '',
-    category: '',
-    rating: 0,
-    message: ''
+    customer_name: '',
+    customer_email: '',
+    customer_phone: '',
+    subject: '',
+    message: '',
+    rating: ''
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState(null)
+   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
 
   const handleWhatsApp = () => {
     const message = 'Hi! I would like to get in touch regarding your artwork.'

@@ -43,9 +43,11 @@ function Admin() {
       axios.get(`${API_URL}/admin/verify`, {
         headers: { Authorization: `Bearer ${savedToken}` }
       })
-      .then(() => {
-        setToken(savedToken)
-        setIsLoggedIn(true)
+      .then((response) => {
+        if (response.data.valid) {
+          setToken(savedToken)
+          setIsLoggedIn(true)
+        }
       })
       .catch(() => {
         localStorage.removeItem('adminToken')
@@ -59,6 +61,33 @@ function Admin() {
       loadDashboardData()
     }
   }, [activeTab, isLoggedIn, token])
+
+    // Verify token is valid
+  const verifyToken = async (savedToken) => {
+    try {
+      const response = await axios.get(`${API_URL}/admin/verify`, {
+        headers: { Authorization: `Bearer ${savedToken}` }
+      })
+      
+      if (response.data.valid) {
+        setToken(savedToken)
+        setIsLoggedIn(true)
+      } else {
+        localStorage.removeItem('adminToken')
+        setIsLoggedIn(false)
+      }
+    } catch (error) {
+      console.error('Token verification failed:', error)
+      localStorage.removeItem('adminToken')
+      setIsLoggedIn(false)
+    }
+  }
+
+  // Create axios instance with auth header
+  const getAuthHeaders = () => ({
+    headers: { Authorization: `Bearer ${token}` }
+  })
+
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -75,15 +104,12 @@ function Admin() {
       localStorage.setItem('adminToken', newToken)
       setToken(newToken)
       setIsLoggedIn(true)
-      alert('Login successful!')
     } catch (error) {
       console.error('Login error:', error)
       if (error.response) {
         setError(error.response.data.error || 'Login failed')
-      } else if (error.request) {
-        setError('Cannot connect to server. Check if backend is running.')
       } else {
-        setError('An error occurred. Please try again.')
+        setError('Cannot connect to server.')
       }
     } finally {
       setLoading(false)
@@ -125,13 +151,17 @@ function Admin() {
     setToken(null)
     setIsLoggedIn(false)
     setLoginData({ username: '', password: '' })
+    setActiveTab('dashboard')
   }
 
   const loadDashboardData = async () => {
+    if (!token) return
+
     try {
       const headers = { Authorization: `Bearer ${token}` }
 
       if (activeTab === 'artworks') {
+        // Artworks are public, categories need auth
         const [artworksRes, categoriesRes] = await Promise.all([
           axios.get(`${API_URL}/artworks`),
           axios.get(`${API_URL}/categories`)
@@ -146,9 +176,10 @@ function Admin() {
       }
 
       if (activeTab === 'orders') {
+        // Orders require auth
         const [ordersRes, statsRes] = await Promise.all([
-          axios.get(`${API_URL}/orders`, { headers }),
-          axios.get(`${API_URL}/orders/stats/summary`, { headers })
+          axios.get(`${API_URL}/orders`, getAuthHeaders()),
+          axios.get(`${API_URL}/orders/stats/summary`, getAuthHeaders())
         ])
         setOrders(ordersRes.data)
         setOrderStats(statsRes.data)
@@ -189,6 +220,13 @@ function Admin() {
     }
   } catch (error) {
     console.error('Error loading dashboard data:', error)
+
+    if (error.response && error.response.status === 401) {
+        alert('Session expired. Please login again.')
+        handleLogout()
+      } else {
+        alert('Failed to load data: ' + (error.response?.data?.error || error.message))
+      }
   }
 }
 
@@ -243,7 +281,12 @@ function Admin() {
       loadDashboardData()
     } catch (error) {
       console.error('Error adding artwork:', error)
-      alert('Failed to add artwork: ' + (error.response?.data?.error || error.message))
+      if (error.response && error.response.status === 401) {
+        alert('Session expired. Please login again.')
+        handleLogout()
+      } else {
+        alert('Failed to add artwork: ' + (error.response?.data?.error || error.message))
+      }
     } finally {
       setUploading(false)
     }
@@ -254,13 +297,21 @@ function Admin() {
 
     try {
       await axios.delete(`${API_URL}/artworks/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+headers: { 
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/json'
+}
       })
       alert('Artwork deleted successfully!')
       loadDashboardData()
     } catch (error) {
       console.error('Error deleting artwork:', error)
-      alert('Failed to delete artwork')
+      if (error.response && error.response.status === 401) {
+        alert('Session expired. Please login again.')
+        handleLogout()
+      } else {
+        alert('Failed to delete artwork')
+      }
     }
   }
 
@@ -270,14 +321,23 @@ function Admin() {
     try {
       await axios.post(`${API_URL}/categories`, 
         { name: newCategory },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { 
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/json'
+}
+ }
       )
       alert('Category added successfully!')
       setNewCategory('')
       loadDashboardData()
     } catch (error) {
       console.error('Error adding category:', error)
-      alert(error.response?.data?.error || 'Failed to add category')
+      if (error.response && error.response.status === 401) {
+        alert('Session expired. Please login again.')
+        handleLogout()
+      } else {
+        alert(error.response?.data?.error || 'Failed to add category')
+      }
     }
   }
 
@@ -286,14 +346,21 @@ function Admin() {
 
     try {
       await axios.delete(`${API_URL}/orders/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+headers: { 
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/json'
+}      })
       alert("Order deleted successfully!")
       loadDashboardData()
     } catch (error) {
       console.error("Error deleting order:", error)
-      alert("Failed to delete order.")
-    }
+      if (error.response && error.response.status === 401) {
+        alert('Session expired. Please login again.')
+        handleLogout()
+      } else {
+        alert(error.response?.data?.error || 'Failed to delete category')
+      }
+        }
   }
 
   const handleDeleteCategory = async (id) => {
@@ -301,8 +368,10 @@ function Admin() {
 
     try {
       await axios.delete(`${API_URL}/categories/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+headers: { 
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/json'
+}      })
       alert('Category deleted successfully!')
       loadDashboardData()
     } catch (error) {
@@ -315,14 +384,22 @@ function Admin() {
     try {
       await axios.patch(`${API_URL}/orders/${orderId}/status`,
         { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { 
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/json'
+}}
       )
       alert('Order status updated!')
       loadDashboardData()
     } catch (error) {
       console.error('Error updating order status:', error)
-      alert('Failed to update status')
-    }
+      if (error.response && error.response.status === 401) {
+        alert('Session expired. Please login again.')
+        handleLogout()
+      } else {
+        alert('Failed to update status')
+      }  
+      }
   }
 
   // FEEDBACK HANDLERS
@@ -330,7 +407,10 @@ function Admin() {
     try {
       await axios.patch(`${API_URL}/feedback/${feedbackId}/status`,
         { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { 
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/json'
+} }
       )
       alert('Feedback status updated!')
       loadDashboardData()
@@ -345,8 +425,10 @@ function Admin() {
 
     try {
       await axios.delete(`${API_URL}/feedback/${feedbackId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+headers: { 
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/json'
+}      })
       alert("Feedback deleted successfully!")
       loadDashboardData()
     } catch (error) {
@@ -358,7 +440,10 @@ function Admin() {
   const handleExportOrders = async () => {
     try {
       const response = await axios.get(`${API_URL}/admin/export/orders`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/json'
+},
         responseType: 'blob'
       })
 
@@ -373,14 +458,22 @@ function Admin() {
       alert('Orders exported successfully!')
     } catch (error) {
       console.error('Error exporting orders:', error)
-      alert('Failed to export orders')
-    }
+      if (error.response && error.response.status === 401) {
+        alert('Session expired. Please login again.')
+        handleLogout()
+      } else {
+        alert('Failed to export orders')
+      }
+        }
   }
 
   const handleExportArtworks = async () => {
     try {
       const response = await axios.get(`${API_URL}/admin/export/artworks`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/json'
+},
         responseType: 'blob'
       })
 
@@ -395,7 +488,12 @@ function Admin() {
       alert('Artworks exported successfully!')
     } catch (error) {
       console.error('Error exporting artworks:', error)
-      alert('Failed to export artworks')
+      if (error.response && error.response.status === 401) {
+        alert('Session expired. Please login again.')
+        handleLogout()
+      } else {
+        alert('Failed to export artworks')
+      }    
     }
   }
 
@@ -527,28 +625,32 @@ const handleExportFeedback = async () => {
               Login with Username & Password
             </h3>
             
-            <form onSubmit={handleLogin}>
-              <div className="form-group">
-                <label>Username</label>
-                <input 
-                  type="text" 
-                  required 
-                  value={loginData.username}
-                  onChange={(e) => setLoginData({...loginData, username: e.target.value})}
-                  placeholder="Enter your username"
-                />
-              </div>
+          <form onSubmit={handleLogin}>
+            <div className="form-group">
+              <label>Username</label>
+              <input 
+                type="text" 
+                required 
+                value={loginData.username}
+                onChange={(e) => setLoginData({...loginData, username: e.target.value})}
+              />
+            </div>
 
-              <div className="form-group">
-                <label>Password</label>
-                <input 
-                  type="password" 
-                  required 
-                  value={loginData.password}
-                  onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                  placeholder="Enter your password"
-                />
+            <div className="form-group">
+              <label>Password</label>
+              <input 
+                type="password" 
+                required 
+                value={loginData.password}
+                onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+              />
+            </div>
+
+                        {error && (
+              <div style={{ marginBottom: '1rem', color: '#d32f2f', background: '#ffebee', padding: '1rem', borderRadius: '8px' }}>
+                {error}
               </div>
+            )}
 
               <button type="submit" className="btn" disabled={loading} style={{ width: '100%' }}>
                 {loading ? 'Logging in...' : 'Login with Password'}
@@ -626,19 +728,19 @@ const handleExportFeedback = async () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           {/* Total Orders */}
           <div style={{ background: '#e3f2fd', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#1976d2' }}>{dashboardStats.orders.total_orders}</h3>
+            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#1976d2' }}>{dashboardStats.orders?.total_orders || 0}</h3>
             <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Total Orders</p>
           </div>
 
           {/* Pending Orders */}
           <div style={{ background: '#fff3cd', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#856404' }}>{dashboardStats.orders.pending_orders}</h3>
+            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#856404' }}>{dashboardStats.orders?.pending_orders || 0}</h3>
             <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Pending Orders</p>
           </div>
 
           {/* Total Artworks */}
           <div style={{ background: '#f8d7da', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#721c24' }}>{dashboardStats.artworks.total_artworks}</h3>
+            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#721c24' }}>{dashboardStats.artworks?.total_artworks || 0}</h3>
             <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Total Artworks</p>
           </div>
 
@@ -655,7 +757,7 @@ const handleExportFeedback = async () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
           {/* Completed Orders - Smaller card */}
           <div style={{ background: '#d4edda', padding: '1rem', borderRadius: '10px', textAlign: 'center', border: '2px solid #c3e6cb' }}>
-            <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#155724' }}>{dashboardStats.orders.completed_orders}</h4>
+            <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#155724' }}>{dashboardStats.orders?.completed_orders || 0}</h4>
             <p style={{ margin: '0.3rem 0 0 0', color: '#155724', fontSize: '0.9rem', fontWeight: 500 }}>Completed Orders</p>
           </div>
 
@@ -723,7 +825,7 @@ const handleExportFeedback = async () => {
         </div>
 
         <h3 style={{ marginBottom: '1rem', color: '#333' }}>Recent Orders</h3>
-        {dashboardStats.recentOrders.length > 0 ? (
+        {dashboardStats.recentOrders && dashboardStats.recentOrders.length > 0 ? (          
           <div style={{ display: 'grid', gap: '1rem' }}>
             {dashboardStats.recentOrders.map(order => (
               <div key={order.id} style={{ 
@@ -774,7 +876,7 @@ const handleExportFeedback = async () => {
             borderRadius: '12px',
             color: '#666'
           }}>
-            <p style={{ fontSize: '1.2rem', margin: 0 }}>📦 No recent orders</p>
+            <p style={{ fontSize: '1.2rem', margin: 0 }}> No recent orders</p>
             <p style={{ fontSize: '0.9rem', marginTop: '0.5rem', color: '#999' }}>
               New orders will appear here
             </p>

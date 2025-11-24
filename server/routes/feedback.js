@@ -1,19 +1,38 @@
 const express = require('express');
 const router = express.Router();
 const { promisePool } = require('../db');
+const { requireAdmin } = require('../middleware/auth');
+const Joi = require('joi');
 const jwt = require('jsonwebtoken');
+
+// Validation Schema
+const feedbackSchema = Joi.object({
+  customer_name: Joi.string().min(2).max(100).required(),
+  customer_email: Joi.string().email().required(),
+  customer_phone: Joi.string().pattern(/^[0-9]{10}$/).allow('', null),
+  subject: Joi.string().min(3).max(200).required(),
+  message: Joi.string().min(10).max(2000).required(),
+  rating: Joi.number().integer().min(1).max(5).required(),
+  feedback_type: Joi.string()
+    .valid(
+      'artwork_quality',
+      'customer_service',
+      'website_experience',
+      'appreciation',
+      'complaint'
+    )
+    .required()
+});
 
 // Simple token verification
 const verifyToken = (req, res, next) => {
   try {
     const token = req.headers['authorization']?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.admin = decoded;
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+
+    req.admin = jwt.verify(token, process.env.JWT_SECRET);
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
@@ -35,13 +54,33 @@ router.get('/', verifyToken, async (req, res) => {
 // Create new feedback - NO RATE LIMIT
 router.post('/', async (req, res) => {
   try {
+    // Validate input
+    const { error, value } = feedbackSchema.validate(req.body, {
+      abortEarly: false,
+      stripUnknown: true
+    });
+
+    if (error) {
+      const errors = error.details.map(detail => ({
+        field: detail.path.join('.'),
+        message: detail.message
+      }));
+
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: error.details.map(d => d.message)
+      });
+    }
+
     const {
       customer_name,
       customer_email,
-      feedback_type,
+      customer_phone,
+      subject,
+      message,
       rating,
-      message
-    } = req.body;
+      feedback_type
+    } = value;
 
     // Basic validation
     if (!customer_name || !customer_email || !feedback_type || !rating || !message) {
@@ -68,29 +107,95 @@ router.post('/', async (req, res) => {
     // Insert feedback
     const [result] = await promisePool.query(
       `INSERT INTO feedback 
-       (customer_name, customer_email, feedback_type, rating, message, status) 
-       VALUES (?, ?, ?, ?, ?, 'New')`,
-      [customer_name, customer_email, feedback_type, rating, message]
+       (customer_name, customer_email, customer_phone, subject, message, rating, feedback_type, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'New')`,
+      [
+        customer_name,
+        customer_email,
+        customer_phone || null,
+        subject,
+        message,
+        rating,
+        feedback_type
+      ]
     );
 
-    console.log('✅ Feedback saved:', result.insertId);
-
     res.status(201).json({
-      message: 'Feedback submitted successfully! Thank you for your input.',
-      id: result.insertId
+      message: 'Feedback submitted successfully',
+      feedbackId: result.insertId
     });
-
-  } catch (error) {
-    console.error('❌ Error saving feedback:', error);
+  
+        // Check if table doesn't exist
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(500).json({ 
+        error: 'Feedback system not initialized. Please contact administrator.',
+        code: 'TABLE_NOT_FOUND'
+      });
+    }
+    
     res.status(500).json({ 
-      error: 'Failed to submit feedback. Please try again.' 
+      error: 'Failed to submit feedback',
+      details: error.message 
     });
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+// ADMIN ONLY: Get all feedback
+router.get('/', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.query;
+    
+    let query = 'SELECT * FROM feedback WHERE 1=1';
+    const params = [];
+
+    if (status) {
+      query += ' AND status = ?';
+      params.push(status);
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const [feedback] = await promisePool.query(query, params);
+
+    res.json(feedback);
+  } catch (error) {
+    console.error('Error fetching feedback:', error);
+    
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(500).json({ 
+        error: 'Feedback table does not exist',
+        code: 'TABLE_NOT_FOUND'
+      });
+    }
+    
+    res.status(500).json({ error: 'Failed to fetch feedback' });
+  }
+});
+
+// ADMIN ONLY: Get single feedback
+router.get('/:id', requireAdmin, async (req, res) => {
+  try {
+    const [feedback] = await promisePool.query(
+      'SELECT * FROM feedback WHERE id = ?',
+      [req.params.id]
+    );
+
+    if (feedback.length === 0) {
+      return res.status(404).json({ error: 'Feedback not found' });
+    }
+
+    res.json(feedback[0]);
+  } catch (error) {
+    console.error('Error fetching feedback:', error);
+    res.status(500).json({ error: 'Failed to fetch feedback' });
   }
 });
 
 // Update feedback status (admin only)
-router.patch('/:id/status', verifyToken, async (req, res) => {
-  try {
+router.patch('/:id/status', verifyToken, requireAdmin, async (req, res) => {
+    try {
     const { status } = req.body;
     const feedbackId = parseInt(req.params.id);
 
@@ -123,7 +228,7 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
 });
 
 // Delete feedback (admin only)
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', verifyToken, requireAdmin, async (req, res) => {
   try {
     const feedbackId = parseInt(req.params.id);
 
@@ -149,7 +254,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
 });
 
 // Get feedback statistics (admin only)
-router.get('/stats/summary', verifyToken, async (req, res) => {
+router.get('/stats/summary', verifyToken, requireAdmin, async (req, res) => {
   try {
     const [stats] = await promisePool.query(`
       SELECT 
@@ -206,6 +311,7 @@ router.get('/stats/summary', verifyToken, async (req, res) => {
       new_feedback: 0,
       resolved_feedback: 0
     });
+    res.status(500).json({ error: 'Failed to load stats' });
   }
 });
 

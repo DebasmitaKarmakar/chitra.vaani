@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { promisePool } = require('../db');
 const { verifyToken } = require('./admin');
+const { requireAdmin } = require('../middleware/auth');
+const { validate } = require('../middleware/validation');
 
 // Get all categories
 router.get('/', async (req, res) => {
@@ -44,7 +46,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create new category
-router.post('/', async (req, res) => {
+router.post('/', requireAdmin, validate('category'), async (req, res) => {
   try {
     const { name } = req.body;
 
@@ -83,7 +85,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update category
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAdmin, validate('category'), async (req, res) => {
   try {
     const { name } = req.body;
 
@@ -119,7 +121,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete category
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     // Check if category has artworks
     const [artworks] = await promisePool.query(

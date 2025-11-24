@@ -3,6 +3,8 @@ const router = express.Router();
 const { promisePool } = require('../db');
 const { upload, uploadToCloudinary, deleteFromCloudinary } = require('../cloudinary');
 const { verifyToken } = require('./admin');
+const { requireAdmin } = require('../middleware/auth');
+const { validate } = require('../middleware/validation');
 
 // Get all artworks
 router.get('/', async (req, res) => {
@@ -55,7 +57,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create new artwork (with image upload)
-router.post('/', upload.array('photos', 10), async (req, res) => {
+router.post('/', requireAdmin, upload.array('photos', 10), async (req, res) => {
   try {
     const { title, description, category, medium, dimensions, year, price } = req.body;
 
@@ -115,7 +117,7 @@ router.post('/', upload.array('photos', 10), async (req, res) => {
 });
 
 // Delete artwork - FIXED VERSION
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     console.log('Delete request for artwork ID:', req.params.id);
     console.log('Authenticated user:', req.admin);
