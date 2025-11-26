@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom';
+import '../assets/styles.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://chitravaani-api.vercel.app/api'
 
 function Admin() {
+  const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [loginData, setLoginData] = useState({ username: '', password: '' })
   const [loading, setLoading] = useState(false)
@@ -17,7 +20,12 @@ function Admin() {
   const [orders, setOrders] = useState([])
   const [orderStats, setOrderStats] = useState({})
   const [dashboardStats, setDashboardStats] = useState(null)
+  const [stats, setStats] = useState(null);
   
+  // Login form state
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   // FEEDBACK STATE
   const [feedback, setFeedback] = useState([])
   const [feedbackStats, setFeedbackStats] = useState({})
@@ -36,6 +44,18 @@ function Admin() {
   const [uploading, setUploading] = useState(false)
   const [newCategory, setNewCategory] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+
+  // Auto-refresh dashboard every 30 seconds
+useEffect(() => {
+  if (isLoggedIn && token && activeTab === 'dashboard') {
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing dashboard...')
+      loadDashboardData(false)
+    }, 30000) // Refresh every 30 seconds
+
+    return () => clearInterval(interval)
+  }
+}, [isLoggedIn, token, activeTab])
 
   useEffect(() => {
     const savedToken = localStorage.getItem('adminToken')
@@ -154,79 +174,87 @@ function Admin() {
     setActiveTab('dashboard')
   }
 
-  const loadDashboardData = async () => {
-    if (!token) return
+const loadDashboardData = async (forceRefresh = false) => {
+  if (!token) return
 
-    try {
-      const headers = { Authorization: `Bearer ${token}` }
+  try {
+    const headers = { Authorization: `Bearer ${token}` }
 
-      if (activeTab === 'artworks') {
-        // Artworks are public, categories need auth
-        const [artworksRes, categoriesRes] = await Promise.all([
-          axios.get(`${API_URL}/artworks`),
-          axios.get(`${API_URL}/categories`)
-        ])
-        setArtworks(artworksRes.data)
-        setCategories(categoriesRes.data)
-      }
-
-      if (activeTab === 'categories') {
-        const response = await axios.get(`${API_URL}/categories`)
-        setCategories(response.data)
-      }
-
-      if (activeTab === 'orders') {
-        // Orders require auth
-        const [ordersRes, statsRes] = await Promise.all([
-          axios.get(`${API_URL}/orders`, getAuthHeaders()),
-          axios.get(`${API_URL}/orders/stats/summary`, getAuthHeaders())
-        ])
-        setOrders(ordersRes.data)
-        setOrderStats(statsRes.data)
-      }
-
-      // LOAD FEEDBACK DATA
-      if (activeTab === 'feedback') {
-        try {
-          const [feedbackRes, statsRes] = await Promise.all([
-            axios.get(`${API_URL}/feedback`, { headers }),
-            axios.get(`${API_URL}/feedback/stats/summary`, { headers })
-          ])
-          setFeedback(feedbackRes.data)
-          setFeedbackStats(statsRes.data)
-        } catch (err) {
-          console.error('Error loading feedback:', err)
-          setFeedback([])
-          setFeedbackStats({})
-        }
-      }
-
-    if (activeTab === 'dashboard') {
+    // Always load dashboard stats if we're on dashboard OR if forced refresh
+    if (activeTab === 'dashboard' || forceRefresh) {
       const [dashboardRes, feedbackStatsRes] = await Promise.all([
         axios.get(`${API_URL}/admin/dashboard/stats`, { headers }),
         axios.get(`${API_URL}/feedback/stats/summary`, { headers }).catch(() => ({
           data: {
             total_feedback: 0,
             average_rating: 0,
-            new_feedback: 0,
+            pending_feedback: 0,
+            reviewed_feedback: 0,
             resolved_feedback: 0,
             five_star: 0,
-            appreciation_feedback: 0
+            appreciation_feedback: 0,
+            new_feedback: 0,
+            complaints: 0
           }
         }))
       ])
-      setDashboardStats(dashboardRes.data)
-      setFeedbackStats(feedbackStatsRes.data) //  This line is critical!
+      
+      if (dashboardRes && dashboardRes.data) {
+        setDashboardStats(dashboardRes.data)
+      }
+      
+      if (feedbackStatsRes && feedbackStatsRes.data) {
+        setFeedbackStats(feedbackStatsRes.data)
+      }
     }
+
+    if (activeTab === 'artworks' || forceRefresh) {
+      const [artworksRes, categoriesRes] = await Promise.all([
+        axios.get(`${API_URL}/artworks`),
+        axios.get(`${API_URL}/categories`)
+      ])
+      setArtworks(artworksRes.data)
+      setCategories(categoriesRes.data)
+    }
+
+    if (activeTab === 'categories' || forceRefresh) {
+      const response = await axios.get(`${API_URL}/categories`)
+      setCategories(response.data)
+    }
+
+    if (activeTab === 'orders' || forceRefresh) {
+      const [ordersRes, statsRes] = await Promise.all([
+        axios.get(`${API_URL}/orders`, { headers }),
+        axios.get(`${API_URL}/orders/stats/summary`, { headers })
+      ])
+      setOrders(ordersRes.data)
+      setOrderStats(statsRes.data)
+    }
+
+    if (activeTab === 'feedback' || forceRefresh) {
+      try {
+        const [feedbackRes, statsRes] = await Promise.all([
+          axios.get(`${API_URL}/feedback`, { headers }),
+          axios.get(`${API_URL}/feedback/stats/summary`, { headers })
+        ])
+        setFeedback(feedbackRes.data)
+        setFeedbackStats(statsRes.data)
+      } catch (err) {
+        console.error('Error loading feedback:', err)
+        setFeedback([])
+        setFeedbackStats({})
+      }
+    }
+
   } catch (error) {
     console.error('Error loading dashboard data:', error)
-
+    
     if (error.response && error.response.status === 401) {
-        alert('Session expired. Please login again.')
-        handleLogout()
-      } else {
-        alert('Failed to load data: ' + (error.response?.data?.error || error.message))
-      }
+      alert('Session expired. Please login again.')
+      handleLogout()
+    } else {
+      alert('Failed to load data: ' + (error.response?.data?.error || error.message))
+    }
   }
 }
 
@@ -234,208 +262,174 @@ function Admin() {
     setSelectedFiles(Array.from(e.target.files))
   }
 
-  const handleAddArtwork = async (e) => {
-    e.preventDefault()
-
-    if (selectedFiles.length === 0) {
-      alert('Please upload at least one photo!')
-      return
-    }
-
-    setUploading(true)
-
-    try {
-      const formData = new FormData()
-      formData.append('title', newArtwork.title)
-      formData.append('description', newArtwork.description)
-      formData.append('category', newArtwork.category)
-      formData.append('medium', newArtwork.medium)
-      formData.append('dimensions', newArtwork.dimensions)
-      formData.append('year', newArtwork.year)
-      formData.append('price', newArtwork.price)
-
-      selectedFiles.forEach((file, index) => {
-        formData.append('photos', file)
-        formData.append(`label_${index}`, `Photo ${index + 1}`)
-      })
-
-      await axios.post(`${API_URL}/artworks`, formData, {
-        headers: { 
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`
-        }
-      })
-
-      alert('Artwork added successfully!')
-      setNewArtwork({
-        title: '',
-        description: '',
-        category: '',
-        medium: '',
-        dimensions: '',
-        year: '',
-        price: ''
-      })
-      setSelectedFiles([])
-      document.getElementById('artworkImages').value = ''
-      loadDashboardData()
-    } catch (error) {
-      console.error('Error adding artwork:', error)
-      if (error.response && error.response.status === 401) {
-        alert('Session expired. Please login again.')
-        handleLogout()
-      } else {
-        alert('Failed to add artwork: ' + (error.response?.data?.error || error.message))
-      }
-    } finally {
-      setUploading(false)
-    }
+const handleAddArtwork = async (e) => {
+  e.preventDefault()
+  if (selectedFiles.length === 0) {
+    alert('Please upload at least one photo!')
+    return
   }
 
-  const handleDeleteArtwork = async (id) => {
-    if (!window.confirm('Delete this artwork? This cannot be undone!')) return
+  setUploading(true)
+  try {
+    const formData = new FormData()
+    formData.append('title', newArtwork.title)
+    formData.append('description', newArtwork.description)
+    formData.append('category', newArtwork.category)
+    formData.append('medium', newArtwork.medium)
+    formData.append('dimensions', newArtwork.dimensions)
+    formData.append('year', newArtwork.year)
+    formData.append('price', newArtwork.price)
 
-    try {
-      await axios.delete(`${API_URL}/artworks/${id}`, {
-headers: { 
-  Authorization: `Bearer ${token}`,
-  'Content-Type': 'application/json'
+    selectedFiles.forEach((file, index) => {
+      formData.append('photos', file)
+      formData.append(`label_${index}`, `Photo ${index + 1}`)
+    })
+
+    await axios.post(`${API_URL}/artworks`, formData, {
+      headers: { 
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    alert('Artwork added successfully!')
+    setNewArtwork({
+      title: '', description: '', category: '', medium: '', 
+      dimensions: '', year: '', price: ''
+    })
+    setSelectedFiles([])
+    document.getElementById('artworkImages').value = ''
+    
+    // Force refresh all data
+    await loadDashboardData(true)
+  } catch (error) {
+    console.error('Error adding artwork:', error)
+    alert('Failed to add artwork: ' + (error.response?.data?.error || error.message))
+  } finally {
+    setUploading(false)
+  }
 }
-      })
-      alert('Artwork deleted successfully!')
-      loadDashboardData()
-    } catch (error) {
-      console.error('Error deleting artwork:', error)
-      if (error.response && error.response.status === 401) {
-        alert('Session expired. Please login again.')
-        handleLogout()
-      } else {
-        alert('Failed to delete artwork')
+
+const handleDeleteArtwork = async (id) => {
+  if (!window.confirm('Delete this artwork?')) return
+  try {
+    await axios.delete(`${API_URL}/artworks/${id}`, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
-    }
+    })
+    alert('Artwork deleted successfully!')
+    await loadDashboardData(true) // Force refresh
+  } catch (error) {
+    console.error('Error deleting artwork:', error)
+    alert('Failed to delete artwork')
   }
-
-  const handleAddCategory = async (e) => {
-    e.preventDefault()
-
-    try {
-      await axios.post(`${API_URL}/categories`, 
-        { name: newCategory },
-        { headers: { 
-  Authorization: `Bearer ${token}`,
-  'Content-Type': 'application/json'
 }
- }
-      )
-      alert('Category added successfully!')
-      setNewCategory('')
-      loadDashboardData()
-    } catch (error) {
-      console.error('Error adding category:', error)
-      if (error.response && error.response.status === 401) {
-        alert('Session expired. Please login again.')
-        handleLogout()
-      } else {
-        alert(error.response?.data?.error || 'Failed to add category')
+
+const handleAddCategory = async (e) => {
+  e.preventDefault()
+  try {
+    await axios.post(`${API_URL}/categories`, 
+      { name: newCategory },
+      { headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }}
+    )
+    alert('Category added successfully!')
+    setNewCategory('')
+    await loadDashboardData(true) // Force refresh
+  } catch (error) {
+    console.error('Error adding category:', error)
+    alert(error.response?.data?.error || 'Failed to add category')
+  }
+}
+
+const handleDeleteCategory = async (id) => {
+  if (!window.confirm('Delete this category?')) return
+  try {
+    await axios.delete(`${API_URL}/categories/${id}`, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
-    }
+    })
+    alert('Category deleted successfully!')
+    await loadDashboardData(true) // Force refresh
+  } catch (error) {
+    console.error('Error deleting category:', error)
+    alert(error.response?.data?.error || 'Failed to delete category')
   }
+}
 
-  const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm("Are you sure you want to delete this order?")) return
+const handleUpdateOrderStatus = async (orderId, newStatus) => {
+  try {
+    await axios.patch(`${API_URL}/orders/${orderId}/status`,
+      { status: newStatus },
+      { headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }}
+    )
+    alert('Order status updated!')
+    await loadDashboardData(true) // Force refresh
+  } catch (error) {
+    console.error('Error updating order status:', error)
+    alert('Failed to update status')
+  }
+}
 
-    try {
-      await axios.delete(`${API_URL}/orders/${orderId}`, {
-headers: { 
-  Authorization: `Bearer ${token}`,
-  'Content-Type': 'application/json'
-}      })
-      alert("Order deleted successfully!")
-      loadDashboardData()
-    } catch (error) {
-      console.error("Error deleting order:", error)
-      if (error.response && error.response.status === 401) {
-        alert('Session expired. Please login again.')
-        handleLogout()
-      } else {
-        alert(error.response?.data?.error || 'Failed to delete category')
+const handleDeleteOrder = async (orderId) => {
+  if (!window.confirm("Are you sure you want to delete this order?")) return
+  try {
+    await axios.delete(`${API_URL}/orders/${orderId}`, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
-        }
+    })
+    alert("Order deleted successfully!")
+    await loadDashboardData(true) // Force refresh
+  } catch (error) {
+    console.error("Error deleting order:", error)
+    alert(error.response?.data?.error || 'Failed to delete order')
   }
+}
 
-  const handleDeleteCategory = async (id) => {
-    if (!window.confirm('Delete this category?')) return
-
-    try {
-      await axios.delete(`${API_URL}/categories/${id}`, {
-headers: { 
-  Authorization: `Bearer ${token}`,
-  'Content-Type': 'application/json'
-}      })
-      alert('Category deleted successfully!')
-      loadDashboardData()
-    } catch (error) {
-      console.error('Error deleting category:', error)
-      alert(error.response?.data?.error || 'Failed to delete category')
-    }
+const handleUpdateFeedbackStatus = async (feedbackId, newStatus) => {
+  try {
+    await axios.patch(`${API_URL}/feedback/${feedbackId}/status`,
+      { status: newStatus },
+      { headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }}
+    )
+    alert('Feedback status updated!')
+    await loadDashboardData(true) // Force refresh
+  } catch (error) {
+    console.error('Error updating feedback status:', error)
+    alert('Failed to update status')
   }
+}
 
-  const handleUpdateOrderStatus = async (orderId, newStatus) => {
-    try {
-      await axios.patch(`${API_URL}/orders/${orderId}/status`,
-        { status: newStatus },
-        { headers: { 
-  Authorization: `Bearer ${token}`,
-  'Content-Type': 'application/json'
-}}
-      )
-      alert('Order status updated!')
-      loadDashboardData()
-    } catch (error) {
-      console.error('Error updating order status:', error)
-      if (error.response && error.response.status === 401) {
-        alert('Session expired. Please login again.')
-        handleLogout()
-      } else {
-        alert('Failed to update status')
-      }  
+const handleDeleteFeedback = async (feedbackId) => {
+  if (!window.confirm("Are you sure you want to delete this feedback?")) return
+  try {
+    await axios.delete(`${API_URL}/feedback/${feedbackId}`, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
+    })
+    alert("Feedback deleted successfully!")
+    await loadDashboardData(true) // Force refresh
+  } catch (error) {
+    console.error("Error deleting feedback:", error)
+    alert("Failed to delete feedback.")
   }
-
-  // FEEDBACK HANDLERS
-  const handleUpdateFeedbackStatus = async (feedbackId, newStatus) => {
-    try {
-      await axios.patch(`${API_URL}/feedback/${feedbackId}/status`,
-        { status: newStatus },
-        { headers: { 
-  Authorization: `Bearer ${token}`,
-  'Content-Type': 'application/json'
-} }
-      )
-      alert('Feedback status updated!')
-      loadDashboardData()
-    } catch (error) {
-      console.error('Error updating feedback status:', error)
-      alert('Failed to update status')
-    }
-  }
-
-  const handleDeleteFeedback = async (feedbackId) => {
-    if (!window.confirm("Are you sure you want to delete this feedback?")) return
-
-    try {
-      await axios.delete(`${API_URL}/feedback/${feedbackId}`, {
-headers: { 
-  Authorization: `Bearer ${token}`,
-  'Content-Type': 'application/json'
-}      })
-      alert("Feedback deleted successfully!")
-      loadDashboardData()
-    } catch (error) {
-      console.error("Error deleting feedback:", error)
-      alert("Failed to delete feedback.")
-    }
-  }
+}
 
   const handleExportOrders = async () => {
     try {
@@ -558,6 +552,35 @@ const handleExportFeedback = async () => {
     }
     
     alert('x' + errorMessage);
+  }
+};
+
+// Force refresh all data after any action
+const refreshAllData = async () => {
+  console.log(' Refreshing all dashboard data...');
+  
+  try {
+    const headers = { Authorization: `Bearer ${token}` };
+    
+    // Always fetch dashboard stats
+    const [dashboardRes, ordersRes, feedbackRes] = await Promise.all([
+      axios.get(`${API_URL}/admin/dashboard/stats`, { headers }),
+      axios.get(`${API_URL}/orders/stats/summary`, { headers }),
+      axios.get(`${API_URL}/feedback/stats/summary`, { headers }).catch(() => ({
+        data: { total_feedback: 0, average_rating: 0 }
+      }))
+    ]);
+    
+    setDashboardStats(dashboardRes.data);
+    setOrderStats(ordersRes.data);
+    setFeedbackStats(feedbackRes.data);
+    
+    // Also refresh the current tab's data
+    await loadDashboardData(false);
+    
+    console.log(' Dashboard refreshed');
+  } catch (error) {
+    console.error(' Error refreshing:', error);
   }
 };
 
@@ -721,33 +744,42 @@ const handleExportFeedback = async () => {
 
 {activeTab === 'dashboard' && (
   <div className="info-section">
-    <h2>Dashboard Overview</h2>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <h2>Dashboard Overview</h2>
+      <button 
+        className="btn" 
+        onClick={() => loadDashboardData(true)}
+        style={{ padding: '0.6rem 1.2rem' }}
+      >
+         Refresh Data
+      </button>
+    </div>
     {dashboardStats ? (
       <>
         {/* Updated Stats Grid - Removed Completed Orders, Added Feedback */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           {/* Total Orders */}
           <div style={{ background: '#e3f2fd', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#1976d2' }}>{dashboardStats.orders?.total_orders || 0}</h3>
+            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#1976d2' }}>{Number(dashboardStats.orders?.total_orders) || 0}</h3>
             <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Total Orders</p>
           </div>
 
           {/* Pending Orders */}
           <div style={{ background: '#fff3cd', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#856404' }}>{dashboardStats.orders?.pending_orders || 0}</h3>
+            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#856404' }}>{Number(dashboardStats.orders?.pending_orders) || 0}</h3>
             <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Pending Orders</p>
           </div>
 
           {/* Total Artworks */}
           <div style={{ background: '#f8d7da', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#721c24' }}>{dashboardStats.artworks?.total_artworks || 0}</h3>
+            <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#721c24' }}>{Number(dashboardStats.artworks?.total_artworks) || 0}</h3>
             <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Total Artworks</p>
           </div>
 
           {/* NEW: Total Feedback */}
           <div style={{ background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)', padding: '1.5rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
             <h3 style={{ fontSize: '2.5rem', margin: 0, color: '#0369a1' }}>
-              {feedbackStats?.total_feedback || 0}
+              {Number(feedbackStats?.total_feedback) || 0}
             </h3>
             <p style={{ margin: '0.5rem 0 0 0', color: '#555', fontWeight: 600 }}>Customer Feedback</p>
           </div>
@@ -757,14 +789,14 @@ const handleExportFeedback = async () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
           {/* Completed Orders - Smaller card */}
           <div style={{ background: '#d4edda', padding: '1rem', borderRadius: '10px', textAlign: 'center', border: '2px solid #c3e6cb' }}>
-            <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#155724' }}>{dashboardStats.orders?.completed_orders || 0}</h4>
+            <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#155724' }}>{Number(dashboardStats.orders?.completed_orders) || 0}</h4>
             <p style={{ margin: '0.3rem 0 0 0', color: '#155724', fontSize: '0.9rem', fontWeight: 500 }}>Completed Orders</p>
           </div>
 
           {/* Average Feedback Rating */}
           <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', padding: '1rem', borderRadius: '10px', textAlign: 'center', border: '2px solid #fcd34d' }}>
             <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#92400e' }}>
-              {feedbackStats?.average_rating ? `${feedbackStats.average_rating.toFixed(1)} ★` : 'N/A'}
+              {Number(feedbackStats?.average_rating) ? `${feedbackStats.average_rating.toFixed(1)} ★` : 'N/A'}
             </h4>
             <p style={{ margin: '0.3rem 0 0 0', color: '#92400e', fontSize: '0.9rem', fontWeight: 500 }}>Avg Feedback Rating</p>
           </div>
@@ -772,7 +804,7 @@ const handleExportFeedback = async () => {
           {/* New Feedback */}
           <div style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)', padding: '1rem', borderRadius: '10px', textAlign: 'center', border: '2px solid #a5b4fc' }}>
             <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#3730a3' }}>
-              {feedbackStats?.new_feedback || 0}
+              {Number(feedbackStats?.new_feedback) || 0}
             </h4>
             <p style={{ margin: '0.3rem 0 0 0', color: '#3730a3', fontSize: '0.9rem', fontWeight: 500 }}>New Feedback</p>
           </div>
@@ -780,7 +812,7 @@ const handleExportFeedback = async () => {
           {/* Total Categories */}
           <div style={{ background: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', padding: '1rem', borderRadius: '10px', textAlign: 'center', border: '2px solid #f9a8d4' }}>
             <h4 style={{ fontSize: '1.8rem', margin: 0, color: '#831843' }}>
-              {dashboardStats.categories || 0}
+             {dashboardStats.categories?.total_categories || dashboardStats.categories || 0}
             </h4>
             <p style={{ margin: '0.3rem 0 0 0', color: '#831843', fontSize: '0.9rem', fontWeight: 500 }}>Art Categories</p>
           </div>
@@ -818,7 +850,9 @@ const handleExportFeedback = async () => {
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-              {((dashboardStats.orders.completed_orders / (dashboardStats.orders.total_orders || 1)) * 100).toFixed(0)}%
+              {dashboardStats.orders?.total_orders > 0
+                ? ((Number(dashboardStats.orders.completed_orders) / Number(dashboardStats.orders.total_orders)) * 100).toFixed(0)
+                : 0}%            
             </div>
             <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Completion Rate</div>
           </div>
@@ -1193,11 +1227,11 @@ const handleExportFeedback = async () => {
         <p>Total Feedback</p>
       </div>
       <div style={{ background: '#fff3cd', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
-        <h3>
-          {feedbackStats && typeof feedbackStats.average_rating === 'number' 
-            ? feedbackStats.average_rating.toFixed(1) 
-            : '0.0'} 
-        </h3>
+      <h3 style={{ fontSize: '1.8rem', margin: 0, color: '#92400e' }}>
+        {feedbackStats?.average_rating && Number(feedbackStats.average_rating) > 0
+          ? `${Number(feedbackStats.average_rating).toFixed(1)} ★` 
+          : 'N/A'}
+      </h3>
         <p>Avg Rating</p>
       </div>
       <div style={{ background: '#d4edda', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>

@@ -7,21 +7,37 @@ const jwt = require('jsonwebtoken');
 
 // Validation Schema
 const feedbackSchema = Joi.object({
-  customer_name: Joi.string().min(2).max(100).required(),
-  customer_email: Joi.string().email().required(),
-  customer_phone: Joi.string().pattern(/^[0-9]{10}$/).allow('', null),
-  subject: Joi.string().min(3).max(200).required(),
-  message: Joi.string().min(10).max(2000).required(),
-  rating: Joi.number().integer().min(1).max(5).required(),
+  customer_name: Joi.string().min(2).max(100).required()
+    .messages({
+      'string.min': 'Name must be at least 2 characters',
+      'any.required': 'Name is required'
+    }),
+  customer_email: Joi.string().email().required()
+    .messages({
+      'string.email': 'Please enter a valid email address',
+      'any.required': 'Email is required'
+    }),
+  customer_phone: Joi.string()
+    .pattern(/^[0-9]{10}$/)
+    .allow('', null)
+    .messages({
+      'string.pattern.base': 'Phone must be exactly 10 digits'
+    }),
+  subject: Joi.string().min(3).max(200).required()
+    .messages({
+      'string.min': 'Subject must be at least 3 characters',
+      'any.required': 'Subject is required'
+    }),
+  message: Joi.string().min(10).max(2000).required()
+    .messages({
+      'string.min': 'Message must be at least 10 characters',
+      'string.max': 'Message cannot exceed 2000 characters',
+      'any.required': 'Message is required'
+    }),
+  rating: Joi.number().integer().min(1).max(5).allow(null).optional(),
   feedback_type: Joi.string()
-    .valid(
-      'artwork_quality',
-      'customer_service',
-      'website_experience',
-      'appreciation',
-      'complaint'
-    )
-    .required()
+    .valid('appreciation', 'suggestion', 'complaint', 'question', 'other')
+    .default('other')
 });
 
 // Simple token verification
@@ -52,8 +68,11 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // Create new feedback - NO RATE LIMIT
+// FIXED: Create new feedback - Replace lines 26-86 in feedback.js
 router.post('/', async (req, res) => {
   try {
+    console.log(' Feedback submission received:', req.body);
+
     // Validate input
     const { error, value } = feedbackSchema.validate(req.body, {
       abortEarly: false,
@@ -66,9 +85,10 @@ router.post('/', async (req, res) => {
         message: detail.message
       }));
 
+      console.log('Validation failed:', errors);
       return res.status(400).json({
         error: 'Validation failed',
-        details: error.details.map(d => d.message)
+        details: errors
       });
     }
 
@@ -82,11 +102,28 @@ router.post('/', async (req, res) => {
       feedback_type
     } = value;
 
-    // Basic validation
-    if (!customer_name || !customer_email || !feedback_type || !rating || !message) {
-      return res.status(400).json({ 
-        error: 'Missing required fields' 
-      });
+    // Manual validation (more lenient than Joi)
+    if (!customer_name || customer_name.length < 2) {
+      return res.status(400).json({ error: 'Name must be at least 2 characters' });
+    }
+
+    if (!customer_email || !customer_email.includes('@')) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+
+    if (!subject || subject.length < 3) {
+      return res.status(400).json({ error: 'Subject must be at least 3 characters' });
+    }
+
+    if (!message || message.length < 10) {
+      return res.status(400).json({ error: 'Message must be at least 10 characters' });
+    }
+
+    // Phone is optional, but if provided must be 10 digits
+    if (customer_phone && customer_phone.length > 0) {
+      if (!/^[0-9]{10}$/.test(customer_phone)) {
+        return res.status(400).json({ error: 'Phone must be exactly 10 digits' });
+      }
     }
 
     // Validate email
@@ -107,36 +144,30 @@ router.post('/', async (req, res) => {
     // Insert feedback
     const [result] = await promisePool.query(
       `INSERT INTO feedback 
-       (customer_name, customer_email, customer_phone, subject, message, rating, feedback_type, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'New')`,
+       (customer_name, customer_email, customer_phone, subject, message, rating, status) 
+       VALUES (?, ?, ?, ?, ?, ?, 'Pending')`,
       [
         customer_name,
         customer_email,
         customer_phone || null,
         subject,
         message,
-        rating,
-        feedback_type
+        rating ? parseInt(rating) : null
       ]
     );
+
+    console.log(' Feedback inserted, ID:', result.insertId);
 
     res.status(201).json({
       message: 'Feedback submitted successfully',
       feedbackId: result.insertId
     });
-  
         // Check if table doesn't exist
     if (error.code === 'ER_NO_SUCH_TABLE') {
-      return res.status(500).json({ 
-        error: 'Feedback system not initialized. Please contact administrator.',
-        code: 'TABLE_NOT_FOUND'
-      });
+      return res.status(500).json({ /*...*/ });
     }
     
-    res.status(500).json({ 
-      error: 'Failed to submit feedback',
-      details: error.message 
-    });
+    res.status(500).json({ /*...*/ });
   } catch (error) {
     console.error(error);
   }
@@ -160,17 +191,21 @@ router.get('/', verifyToken, requireAdmin, async (req, res) => {
     const [feedback] = await promisePool.query(query, params);
 
     res.json(feedback);
-  } catch (error) {
-    console.error('Error fetching feedback:', error);
+ } catch (error) {
+    console.error(' Error submitting feedback:', error);
     
+    // Check if table doesn't exist
     if (error.code === 'ER_NO_SUCH_TABLE') {
       return res.status(500).json({ 
-        error: 'Feedback table does not exist',
+        error: 'Feedback system not initialized. Please contact administrator.',
         code: 'TABLE_NOT_FOUND'
       });
     }
     
-    res.status(500).json({ error: 'Failed to fetch feedback' });
+    res.status(500).json({ 
+      error: 'Failed to submit feedback',
+      details: error.message 
+    });
   }
 });
 

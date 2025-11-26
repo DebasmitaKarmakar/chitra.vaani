@@ -199,7 +199,7 @@ function CustomOrder() {
         </form>
 
         <div style={{ background: '#fff3cd', padding: '2rem', borderRadius: '12px', marginTop: '3rem', border: '2px solid #ffc107' }}>
-          <centre><h3> Custom Order Tips</h3></centre>
+          <div style={{ textAlign: 'center' }}><h3> Custom Order Tips</h3></div>
           <ul style={{ lineHeight: '1.8', marginLeft: '1.5rem' }}>
             <li>Be as detailed as possible about your vision</li>
             <li>Share reference images via WhatsApp for better clarity</li>

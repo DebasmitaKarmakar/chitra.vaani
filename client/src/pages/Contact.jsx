@@ -102,6 +102,59 @@ function Contact() {
       </div>
     )
   }
+  
+const handleSubmit = async (e) => {
+  e.preventDefault()
+  setError('')
+  setSuccess(false)
+  setSubmitting(true)
+
+  // Clean and validate data
+  const cleanPhone = formData.customer_phone.replace(/\D/g, ''); // Remove non-digits
+
+  const submitData = {
+    customer_name: formData.customer_name.trim(),
+    customer_email: formData.customer_email.trim().toLowerCase(),
+    customer_phone: cleanPhone || null,
+    subject: formData.subject.trim(),
+    message: formData.message.trim(),
+    rating: formData.rating ? parseInt(formData.rating) : null
+  };
+
+  console.log(' Submitting feedback:', submitData);
+
+  try {
+    const response = await axios.post(`${API_URL}/feedback`, submitData);
+
+    console.log(' Success:', response.data);
+    
+    setSuccess(true)
+    setFormData({
+      customer_name: '',
+      customer_email: '',
+      customer_phone: '',
+      subject: '',
+      message: '',
+      rating: ''
+    })
+
+    setTimeout(() => setSuccess(false), 5000)
+  } catch (error) {
+    console.error('❌ Error:', error);
+    console.error('Response:', error.response?.data);
+    
+    if (error.response?.data?.error) {
+      setError(error.response.data.error);
+    } else if (error.response?.data?.details) {
+      const errorMessages = error.response.data.details.map(d => d.message).join(', ');
+      setError(errorMessages);
+    } else {
+      setError('Failed to submit feedback. Please try again or contact via WhatsApp.');
+    }
+  } finally {
+    setSubmitting(false)
+  }
+}
 
   return (
     <div className="container fade-in">
