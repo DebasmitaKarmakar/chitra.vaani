@@ -19,7 +19,7 @@ const verifyToken = (req, res, next) => {
 // PUBLIC: Submit feedback - NO AUTH REQUIRED
 router.post('/', async (req, res) => {
   try {
-    console.log('📥 Feedback submission received');
+    console.log('Feedback submission received');
     console.log('Body:', req.body);
 
     const {
@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Phone must be exactly 10 digits' });
     }
 
-    console.log(' Validation passed, inserting into database...');
+    console.log('Validation passed, inserting into database...');
 
     // Insert into database
     const [result] = await promisePool.query(
@@ -75,7 +75,7 @@ router.post('/', async (req, res) => {
       ]
     );
 
-    console.log(' Feedback inserted, ID:', result.insertId);
+    console.log('Feedback inserted, ID:', result.insertId);
 
     res.status(201).json({
       message: 'Feedback submitted successfully',
@@ -83,7 +83,7 @@ router.post('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error(' Error submitting feedback:', error);
+    console.error('Error submitting feedback:', error);
     
     if (error.code === 'ER_NO_SUCH_TABLE') {
       return res.status(500).json({ 
@@ -122,6 +122,9 @@ router.get('/', verifyToken, requireAdmin, async (req, res) => {
     query += ' ORDER BY created_at DESC';
 
     const [feedback] = await promisePool.query(query, params);
+    
+    console.log(`Fetched ${feedback.length} feedback records`);
+    
     res.json(feedback);
   } catch (error) {
     console.error('Error fetching feedback:', error);
@@ -208,7 +211,7 @@ router.delete('/:id', verifyToken, requireAdmin, async (req, res) => {
   }
 });
 
-// ADMIN: Get feedback statistics
+// ADMIN: Get feedback statistics - FIXED
 router.get('/stats/summary', verifyToken, requireAdmin, async (req, res) => {
   try {
     const [stats] = await promisePool.query(`
@@ -226,7 +229,7 @@ router.get('/stats/summary', verifyToken, requireAdmin, async (req, res) => {
       FROM feedback
     `);
 
-    res.json({
+    const result = {
       total_feedback: parseInt(stats[0].total_feedback) || 0,
       average_rating: parseFloat(stats[0].average_rating) || 0,
       five_star: parseInt(stats[0].five_star) || 0,
@@ -239,8 +242,12 @@ router.get('/stats/summary', verifyToken, requireAdmin, async (req, res) => {
       resolved_feedback: parseInt(stats[0].resolved_feedback) || 0,
       appreciation_feedback: parseInt(stats[0].five_star) || 0,
       new_feedback: parseInt(stats[0].pending_feedback) || 0,
-      complaints: parseInt(stats[0].one_star) + parseInt(stats[0].two_star) || 0
-    });
+      complaints: (parseInt(stats[0].one_star) || 0) + (parseInt(stats[0].two_star) || 0)
+    };
+
+    console.log('Feedback stats:', result);
+    res.json(result);
+    
   } catch (error) {
     console.error('Error fetching feedback stats:', error);
     res.json({

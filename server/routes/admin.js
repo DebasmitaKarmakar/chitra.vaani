@@ -317,13 +317,18 @@ router.get('/export/artworks', requireAdmin, async (req, res) => {
   }
 });
 
-// Export feedback (protected, admin only)
+// Export feedback (protected, admin only) - CORRECTED VERSION
 router.get('/export/feedback', requireAdmin, async (req, res) => {
   try {
+    console.log('Starting feedback export...');
+    
+    // Fetch all feedback
     const [feedback] = await promisePool.query(`
       SELECT * FROM feedback 
       ORDER BY created_at DESC
     `);
+
+    console.log(`Found ${feedback.length} feedback records`);
 
     // If no feedback exists, return empty file with headers only
     if (feedback.length === 0) {
@@ -362,9 +367,11 @@ router.get('/export/feedback', requireAdmin, async (req, res) => {
       return res.send(buffer);
     }
 
-    // Generate normal feedback export using excelExport.js
+    // Use the excelExport module to generate the file
     const { generateFeedbackExcel } = require('../excelExport');
     const buffer = await generateFeedbackExcel(feedback);
+
+    console.log('Feedback export file generated successfully');
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename=feedback_${Date.now()}.xlsx`);
@@ -372,9 +379,12 @@ router.get('/export/feedback', requireAdmin, async (req, res) => {
 
   } catch (error) {
     console.error('Error exporting feedback:', error);
+    console.error('Error stack:', error.stack);
+    
     res.status(500).json({ 
       error: 'Failed to export feedback',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });

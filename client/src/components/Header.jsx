@@ -13,8 +13,7 @@ function Header() {
         <ul>
           <li><Link to="/" className={isActive('/')}> Home</Link></li>
           <li><Link to="/gallery" className={isActive('/gallery')}> Gallery</Link></li>
-          <li><Link to="/custom-order" className={isActive('/custom-order')}> Custom Orders</Link></li>
-          <li><Link to="/bulk-order" className={isActive('/bulk-order')}> Bulk Orders</Link></li>
+          <li><Link to="/order" className={isActive('/order')}> Custom Orders</Link></li>
           <li><Link to="/contact" className={isActive('/contact')}> Contact & Feedback</Link></li>
           <li><Link to="/admin" className={isActive('/admin')}> Admin</Link></li>
         </ul>

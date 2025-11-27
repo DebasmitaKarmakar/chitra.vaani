@@ -263,7 +263,7 @@ const loadDashboardData = async (forceRefresh = false) => {
     console.log(' Dashboard data loaded successfully')
 
   } catch (error) {
-    console.error(' Error loading dashboard data:', error)
+    console.error('❌ Error loading dashboard data:', error)
     console.error('Error details:', error.response?.data)
     
     if (error.response && error.response.status === 401) {

@@ -4,8 +4,7 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import Gallery from './pages/Gallery'
 import Artwork from './pages/Artwork'
-import CustomOrder from './pages/CustomOrder'
-import BulkOrder from './pages/BulkOrder'
+import Order from "./pages/Order.jsx";
 import Contact from './pages/Contact'
 import Admin from './pages/Admin'
 
@@ -18,8 +17,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/artwork/:id" element={<Artwork />} />
-          <Route path="/custom-order" element={<CustomOrder />} />
-          <Route path="/bulk-order" element={<BulkOrder />} />
+          <Route path="/order" element={<Order />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
