@@ -317,4 +317,66 @@ router.get('/export/artworks', requireAdmin, async (req, res) => {
   }
 });
 
+// Export feedback (protected, admin only)
+router.get('/export/feedback', requireAdmin, async (req, res) => {
+  try {
+    const [feedback] = await promisePool.query(`
+      SELECT * FROM feedback 
+      ORDER BY created_at DESC
+    `);
+
+    // If no feedback exists, return empty file with headers only
+    if (feedback.length === 0) {
+      const ExcelJS = require('exceljs');
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Customer Feedback');
+
+      worksheet.columns = [
+        { header: 'Feedback ID', key: 'id', width: 12 },
+        { header: 'Customer Name', key: 'customer_name', width: 25 },
+        { header: 'Email', key: 'customer_email', width: 30 },
+        { header: 'Phone', key: 'customer_phone', width: 15 },
+        { header: 'Subject', key: 'subject', width: 30 },
+        { header: 'Message', key: 'message', width: 50 },
+        { header: 'Rating', key: 'rating', width: 10 },
+        { header: 'Status', key: 'status', width: 15 },
+        { header: 'Submitted On', key: 'created_at', width: 20 }
+      ];
+
+      // Style header
+      worksheet.getRow(1).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF6366F1' }
+      };
+
+      // Add note
+      worksheet.addRow({});
+      worksheet.addRow({ id: 'No feedback data available yet' });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=feedback_empty_${Date.now()}.xlsx`);
+      return res.send(buffer);
+    }
+
+    // Generate normal feedback export using excelExport.js
+    const { generateFeedbackExcel } = require('../excelExport');
+    const buffer = await generateFeedbackExcel(feedback);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=feedback_${Date.now()}.xlsx`);
+    res.send(buffer);
+
+  } catch (error) {
+    console.error('Error exporting feedback:', error);
+    res.status(500).json({ 
+      error: 'Failed to export feedback',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router;

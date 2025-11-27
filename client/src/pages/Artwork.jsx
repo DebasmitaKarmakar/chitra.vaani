@@ -12,11 +12,16 @@ function Artwork() {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  
   const [orderData, setOrderData] = useState({
     size: 'standard',
     notes: '',
     customerName: '',
     customerPhone: '',
+    customerEmail: '',
     deliveryAddress: ''
   })
 
@@ -38,9 +43,10 @@ function Artwork() {
     }
   }
 
+  // WhatsApp order (existing functionality)
   const handleWhatsAppOrder = () => {
     if (!orderData.customerName || !orderData.customerPhone || !orderData.deliveryAddress) {
-      alert(' Please fill: Name, Phone, and Address first');
+      alert('⚠️ Please fill: Name, Phone, and Address first');
       return;
     }
 
@@ -49,11 +55,102 @@ function Artwork() {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank')
   }
 
+  // NEW: Database order submission
+  const handleDatabaseOrder = async (e) => {
+    e.preventDefault()
+    setSubmitError('')
+    setSubmitSuccess(false)
+
+    // Validation
+    if (!orderData.customerName || orderData.customerName.trim().length < 2) {
+      setSubmitError('Name must be at least 2 characters')
+      return
+    }
+
+    if (!orderData.customerEmail || !orderData.customerEmail.includes('@')) {
+      setSubmitError('Valid email is required')
+      return
+    }
+
+    if (!orderData.customerPhone || orderData.customerPhone.replace(/\D/g, '').length !== 10) {
+      setSubmitError('Phone must be exactly 10 digits')
+      return
+    }
+
+    if (!orderData.deliveryAddress || orderData.deliveryAddress.trim().length < 10) {
+      setSubmitError('Please provide a complete delivery address')
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      console.log(' Submitting order...')
+
+      const orderPayload = {
+        order_type: 'regular',
+        artwork_id: artwork.id,
+        customer_name: orderData.customerName.trim(),
+        customer_email: orderData.customerEmail.trim().toLowerCase(),
+        customer_phone: orderData.customerPhone.replace(/\D/g, ''),
+        delivery_address: orderData.deliveryAddress.trim(),
+        order_details: {
+          artwork_title: artwork.title,
+          price: artwork.price,
+          size: orderData.size,
+          notes: orderData.notes || ''
+        }
+      }
+
+      console.log('📦 Order payload:', orderPayload)
+
+      const response = await axios.post(`${API_URL}/orders`, orderPayload, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
+      })
+
+      console.log('✅ Order submitted:', response.data)
+
+      setSubmitSuccess(true)
+      
+      // Reset form
+      setOrderData({
+        size: 'standard',
+        notes: '',
+        customerName: '',
+        customerPhone: '',
+        customerEmail: '',
+        deliveryAddress: ''
+      })
+
+      // Show success for 5 seconds
+      setTimeout(() => setSubmitSuccess(false), 5000)
+
+    } catch (error) {
+      console.error('❌ Order submission error:', error)
+      
+      if (error.response?.data?.error) {
+        setSubmitError(error.response.data.error)
+      } else if (error.response?.data?.details) {
+        const errorMessages = error.response.data.details.map(d => d.message).join(', ')
+        setSubmitError(errorMessages)
+      } else if (error.message === 'Network Error') {
+        setSubmitError('Cannot connect to server. Please try WhatsApp order instead.')
+      } else {
+        setSubmitError('Failed to submit order. Please try WhatsApp order instead.')
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const handleShareArtwork = () => {
     const shareUrl = `${window.location.origin}/artwork/${artwork.id}`
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert(' Link copied to clipboard!\n\n' + shareUrl)
+        alert('🔗 Link copied to clipboard!\n\n' + shareUrl)
       }).catch(() => {
         prompt('Copy this link:', shareUrl)
       })
@@ -173,22 +270,26 @@ function Artwork() {
 
         {/* Share Button */}
         <div style={{ background: '#f0f8ff', padding: '1.5rem', borderRadius: '8px', textAlign: 'center', marginBottom: '2rem' }}>
-          <h4 style={{ marginBottom: '1rem' }}> Share This Artwork</h4>
+          <h4 style={{ marginBottom: '1rem' }}>🔗 Share This Artwork</h4>
           <button className="btn" onClick={handleShareArtwork} style={{ background: '#4a90e2' }}>
-             Copy Share Link
+            📋 Copy Share Link
           </button>
         </div>
 
-        {/*  WhatsApp ONLY Order Form */}
+        {/* Order Form - DATABASE + WhatsApp */}
         <div style={{ background: 'linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%)', padding: '2rem', borderRadius: '12px', border: '2px solid #38a169' }}>
-          <h3 style={{ marginBottom: '1.5rem', color: '#2f855a' }}> Place Your Order</h3>
+          <h3 style={{ marginBottom: '1.5rem', color: '#2f855a' }}>🛒 Place Your Order</h3>
           
-          <form onSubmit={(e) => e.preventDefault()}>
+          <form onSubmit={handleDatabaseOrder}>
             <h4 style={{ marginBottom: '1rem', color: '#2d3748' }}>Order Details</h4>
             
             <div className="form-group">
               <label>Size</label>
-              <select value={orderData.size} onChange={(e) => setOrderData({...orderData, size: e.target.value})}>
+              <select 
+                value={orderData.size} 
+                onChange={(e) => setOrderData({...orderData, size: e.target.value})}
+                disabled={submitting}
+              >
                 <option value="standard">As Shown</option>
                 <option value="small">Small (12x16")</option>
                 <option value="medium">Medium (18x24")</option>
@@ -204,6 +305,7 @@ function Artwork() {
                 onChange={(e) => setOrderData({...orderData, notes: e.target.value})}
                 placeholder="Any special requests, custom colors, frame preferences..."
                 rows="3"
+                disabled={submitting}
               />
             </div>
 
@@ -217,6 +319,19 @@ function Artwork() {
                 value={orderData.customerName}
                 onChange={(e) => setOrderData({...orderData, customerName: e.target.value})}
                 placeholder="Your full name"
+                disabled={submitting}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Email *</label>
+              <input 
+                type="email" 
+                required 
+                value={orderData.customerEmail}
+                onChange={(e) => setOrderData({...orderData, customerEmail: e.target.value})}
+                placeholder="your.email@example.com"
+                disabled={submitting}
               />
             </div>
 
@@ -227,7 +342,9 @@ function Artwork() {
                 required 
                 value={orderData.customerPhone}
                 onChange={(e) => setOrderData({...orderData, customerPhone: e.target.value})}
-                placeholder="Your phone number"
+                placeholder="10-digit phone number"
+                maxLength="10"
+                disabled={submitting}
               />
             </div>
 
@@ -239,14 +356,42 @@ function Artwork() {
                 onChange={(e) => setOrderData({...orderData, deliveryAddress: e.target.value})}
                 placeholder="Your complete delivery address"
                 rows="3"
+                disabled={submitting}
               />
             </div>
 
-            {/*  WhatsApp ONLY Button */}
+            {submitError && (
+              <div style={{ 
+                marginBottom: '1rem', 
+                padding: '1rem', 
+                borderRadius: '8px',
+                background: '#fee2e2',
+                color: '#991b1b',
+                border: '2px solid #ef4444'
+              }}>
+                <strong>❌ Error:</strong> {submitError}
+              </div>
+            )}
+
+            {submitSuccess && (
+              <div style={{ 
+                marginBottom: '1rem', 
+                padding: '1rem', 
+                borderRadius: '8px',
+                background: '#d1fae5',
+                color: '#065f46',
+                border: '2px solid #10b981'
+              }}>
+                <strong>✅ Success!</strong> Your order has been placed! We'll contact you soon.
+              </div>
+            )}
+
+            {/* WhatsApp Order Button */}
             <button 
               type="button"
               className="btn" 
               onClick={handleWhatsAppOrder}
+              disabled={submitting}
               style={{ 
                 background: '#25D366', 
                 fontSize: '1.2rem', 
@@ -255,15 +400,15 @@ function Artwork() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
-                width: '100%',
-                marginTop: '2rem'
+                width: '100%'
               }}
             >
-               Order via WhatsApp
+              💬 Order via WhatsApp (Instant)
             </button>
 
             <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666', textAlign: 'center' }}>
-               Click the button to send your order details directly via WhatsApp
+              l<br/>
+              💬 WhatsApp orders get instant response
             </p>
           </form>
         </div>

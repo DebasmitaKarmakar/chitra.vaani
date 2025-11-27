@@ -2,51 +2,59 @@ const express = require('express');
 const router = express.Router();
 const { promisePool } = require('../db');
 const { requireAdmin } = require('../middleware/auth');
-const { validate, sanitizeOrder } = require('../middleware/validation');
 
-// PUBLIC: Create new order (with validation based on order type)
+// PUBLIC: Create new order - RELAXED VALIDATION
 router.post('/', async (req, res) => {
   try {
-    const { order_type } = req.body;
-
-    // Validate based on order type
-    let validationSchema = 'regularOrder';
-    if (order_type === 'custom') {
-      validationSchema = 'customOrder';
-    } else if (order_type === 'bulk') {
-      validationSchema = 'bulkOrder';
-    }
-
-    // Manual validation since we can't use middleware dynamically
-    const Joi = require('joi');
-    const { schemas } = require('../middleware/validation');
-    const schema = schemas[validationSchema];
-
-    const { error, value } = schema.validate(req.body, {
-      abortEarly: false,
-      stripUnknown: true
-    });
-
-    if (error) {
-      const errors = error.details.map(detail => ({
-        field: detail.path.join('.'),
-        message: detail.message
-      }));
-
-      return res.status(400).json({ 
-        error: 'Validation failed',
-        details: errors
-      });
-    }
+    console.log('📥 Order submission received:', req.body);
 
     const {
+      order_type,
       artwork_id,
       customer_name,
       customer_email,
       customer_phone,
       delivery_address,
       order_details
-    } = value;
+    } = req.body;
+
+    // Basic validation only
+    if (!order_type || !['regular', 'custom', 'bulk'].includes(order_type)) {
+      return res.status(400).json({ error: 'Invalid order type. Must be: regular, custom, or bulk' });
+    }
+
+    if (!customer_name || customer_name.trim().length < 2) {
+      return res.status(400).json({ error: 'Customer name must be at least 2 characters' });
+    }
+
+    if (!customer_email || !customer_email.includes('@')) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+
+    if (!customer_phone) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    // Clean phone number
+    const cleanPhone = customer_phone.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      return res.status(400).json({ error: 'Phone must be exactly 10 digits' });
+    }
+
+    // Order type specific validation
+    if (order_type === 'regular' && !artwork_id) {
+      return res.status(400).json({ error: 'Artwork ID is required for regular orders' });
+    }
+
+    if (order_type === 'custom' && (!order_details || !order_details.idea)) {
+      return res.status(400).json({ error: 'Custom order idea is required' });
+    }
+
+    if (order_type === 'bulk' && (!order_details || !order_details.orgName || !order_details.itemType || !order_details.quantity)) {
+      return res.status(400).json({ error: 'Bulk orders require: organization name, item type, and quantity' });
+    }
+
+    console.log('✅ Validation passed, inserting order...');
 
     // Insert order
     const [result] = await promisePool.query(
@@ -57,13 +65,15 @@ router.post('/', async (req, res) => {
       [
         order_type,
         artwork_id || null,
-        customer_name,
-        customer_email,
-        customer_phone || null,
-        delivery_address || null,
-        JSON.stringify(order_details)
+        customer_name.trim(),
+        customer_email.trim().toLowerCase(),
+        cleanPhone,
+        delivery_address?.trim() || null,
+        JSON.stringify(order_details || {})
       ]
     );
+
+    console.log('✅ Order inserted successfully, ID:', result.insertId);
 
     res.status(201).json({
       message: 'Order created successfully',
@@ -71,10 +81,25 @@ router.post('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error('❌ Error creating order:', error);
+    
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(500).json({ 
+        error: 'Orders table not found. Please run database setup.',
+        code: 'TABLE_NOT_FOUND'
+      });
+    }
+
+    if (error.code === 'ER_BAD_FIELD_ERROR') {
+      return res.status(500).json({ 
+        error: 'Database schema mismatch. Please check orders table structure.',
+        code: 'SCHEMA_ERROR'
+      });
+    }
+    
     res.status(500).json({ 
       error: 'Failed to create order',
-      details: error.message 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -162,7 +187,7 @@ router.patch('/:id/status', requireAdmin, async (req, res) => {
     }
 
     const [result] = await promisePool.query(
-      'UPDATE orders SET status = ? WHERE id = ?',
+      'UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?',
       [status, req.params.id]
     );
 

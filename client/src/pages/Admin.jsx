@@ -180,8 +180,14 @@ const loadDashboardData = async (forceRefresh = false) => {
   try {
     const headers = { Authorization: `Bearer ${token}` }
 
-    // Always load dashboard stats if we're on dashboard OR if forced refresh
+    console.log(' Loading dashboard data...')
+    console.log('Active tab:', activeTab)
+    console.log('Force refresh:', forceRefresh)
+
+    // Always load dashboard stats if on dashboard OR force refresh
     if (activeTab === 'dashboard' || forceRefresh) {
+      console.log(' Fetching dashboard stats...')
+      
       const [dashboardRes, feedbackStatsRes] = await Promise.all([
         axios.get(`${API_URL}/admin/dashboard/stats`, { headers }),
         axios.get(`${API_URL}/feedback/stats/summary`, { headers }).catch(() => ({
@@ -199,44 +205,52 @@ const loadDashboardData = async (forceRefresh = false) => {
         }))
       ])
       
-      if (dashboardRes && dashboardRes.data) {
-        setDashboardStats(dashboardRes.data)
-      }
+      console.log(' Dashboard stats received:', dashboardRes.data)
+      console.log(' Feedback stats received:', feedbackStatsRes.data)
       
-      if (feedbackStatsRes && feedbackStatsRes.data) {
-        setFeedbackStats(feedbackStatsRes.data)
-      }
+      setDashboardStats(dashboardRes.data)
+      setFeedbackStats(feedbackStatsRes.data)
     }
 
     if (activeTab === 'artworks' || forceRefresh) {
+      console.log(' Fetching artworks...')
       const [artworksRes, categoriesRes] = await Promise.all([
         axios.get(`${API_URL}/artworks`),
         axios.get(`${API_URL}/categories`)
       ])
+      console.log(' Artworks:', artworksRes.data.length)
       setArtworks(artworksRes.data)
       setCategories(categoriesRes.data)
     }
 
     if (activeTab === 'categories' || forceRefresh) {
+      console.log(' Fetching categories...')
       const response = await axios.get(`${API_URL}/categories`)
+      console.log(' Categories:', response.data.length)
       setCategories(response.data)
     }
 
     if (activeTab === 'orders' || forceRefresh) {
+      console.log(' Fetching orders...')
       const [ordersRes, statsRes] = await Promise.all([
         axios.get(`${API_URL}/orders`, { headers }),
         axios.get(`${API_URL}/orders/stats/summary`, { headers })
       ])
+      console.log(' Orders:', ordersRes.data.length)
+      console.log(' Order stats:', statsRes.data)
       setOrders(ordersRes.data)
       setOrderStats(statsRes.data)
     }
 
     if (activeTab === 'feedback' || forceRefresh) {
+      console.log(' Fetching feedback...')
       try {
         const [feedbackRes, statsRes] = await Promise.all([
           axios.get(`${API_URL}/feedback`, { headers }),
           axios.get(`${API_URL}/feedback/stats/summary`, { headers })
         ])
+        console.log(' Feedback:', feedbackRes.data.length)
+        console.log(' Feedback stats:', statsRes.data)
         setFeedback(feedbackRes.data)
         setFeedbackStats(statsRes.data)
       } catch (err) {
@@ -246,8 +260,11 @@ const loadDashboardData = async (forceRefresh = false) => {
       }
     }
 
+    console.log(' Dashboard data loaded successfully')
+
   } catch (error) {
-    console.error('Error loading dashboard data:', error)
+    console.error(' Error loading dashboard data:', error)
+    console.error('Error details:', error.response?.data)
     
     if (error.response && error.response.status === 401) {
       alert('Session expired. Please login again.')
@@ -1253,10 +1270,9 @@ const refreshAllData = async () => {
         style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd' }}
       >
         <option value="all">All Feedback</option>
-        <option value="New">New</option>
-        <option value="In Review">In Review</option>
+        <option value="Pending">Pending</option>
+        <option value="Reviewed">Reviewed</option>
         <option value="Resolved">Resolved</option>
-        <option value="Archived">Archived</option>
       </select>
 
     </div>
@@ -1350,16 +1366,15 @@ const refreshAllData = async () => {
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <label style={{ fontWeight: 600 }}>Status:</label>
-                  <select 
-                    value={status}
-                    onChange={(e) => handleUpdateFeedbackStatus(item.id, e.target.value)}
-                    style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd' }}
-                  >
-                    <option value="New">New</option>
-                    <option value="In Review">In Review</option>
-                    <option value="Resolved">Resolved</option>
-                    <option value="Archived">Archived</option>
-                  </select>
+                    <select 
+                      value={status}
+                      onChange={(e) => handleUpdateFeedbackStatus(item.id, e.target.value)}
+                      style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd' }}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Reviewed">Reviewed</option>
+                      <option value="Resolved">Resolved</option>
+                    </select>
 
                   <button
                     className="btn btn-danger"
