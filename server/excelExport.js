@@ -153,60 +153,73 @@ async function generateFeedbackExcel(feedbackData) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Customer Feedback');
 
-  // Define columns
+  // Columns
   worksheet.columns = [
-    { header: 'Feedback ID', key: 'id', width: 12 },
+    { header: 'ID', key: 'id', width: 10 },
     { header: 'Customer Name', key: 'customer_name', width: 25 },
     { header: 'Email', key: 'customer_email', width: 30 },
-    { header: 'Feedback Type', key: 'feedback_type', width: 20 },
+    { header: 'Phone', key: 'customer_phone', width: 15 },
+    { header: 'Subject', key: 'subject', width: 30 },
     { header: 'Rating', key: 'rating', width: 10 },
     { header: 'Message', key: 'message', width: 50 },
     { header: 'Status', key: 'status', width: 15 },
-    { header: 'Submitted On', key: 'created_at', width: 20 },
-    { header: 'Last Updated', key: 'updated_at', width: 20 }
+    { header: 'Submitted', key: 'created_at', width: 20 }
   ];
 
-  // Style header row
+  // Header styling
   worksheet.getRow(1).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
   worksheet.getRow(1).fill = {
     type: 'pattern',
     pattern: 'solid',
-    fgColor: { argb: 'FF6366F1' } // Indigo color for feedback
+    fgColor: { argb: 'FF14B8A6' }
   };
 
-  // Add data rows
-  feedbackData.forEach(feedback => {
+  // Check if data exists
+  if (!feedbackData || feedbackData.length === 0) {
     worksheet.addRow({
-      id: feedback.id,
-      customer_name: feedback.customer_name,
-      customer_email: feedback.customer_email,
-      feedback_type: feedback.feedback_type.replace(/_/g, ' ').toUpperCase(),
-      rating: feedback.rating,
-      message: feedback.message,
-      status: feedback.status,
-      created_at: new Date(feedback.created_at).toLocaleString(),
-      updated_at: new Date(feedback.updated_at).toLocaleString()
+      id: 'No data',
+      customer_name: 'No feedback submitted yet',
+      customer_email: '-',
+      customer_phone: '-',
+      subject: '-',
+      rating: '-',
+      message: '-',
+      status: '-',
+      created_at: '-'
     });
-  });
+  } else {
+    // Add rows
+    feedbackData.forEach(feedback => {
+      worksheet.addRow({
+        id: feedback.id,
+        customer_name: feedback.customer_name,
+        customer_email: feedback.customer_email,
+        customer_phone: feedback.customer_phone || 'N/A',
+        subject: feedback.subject,
+        rating: feedback.rating,
+        message: feedback.message,
+        status: feedback.status,
+        created_at: new Date(feedback.created_at).toLocaleString()
+      });
+    });
 
   // Apply conditional formatting for rating
-  worksheet.getColumn('rating').eachCell((cell, rowNumber) => {
-    if (rowNumber > 1) {
-      const rating = parseInt(cell.value);
-      if (rating === 5) {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } };
-        cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
-      } else if (rating === 4) {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
-        cell.font = { color: { argb: 'FFFFFFFF' } };
-      } else if (rating === 3) {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF59E0B' } };
-        cell.font = { color: { argb: 'FFFFFFFF' } };
-      } else if (rating === 2) {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF97316' } };
-        cell.font = { color: { argb: 'FFFFFFFF' } };
+    worksheet.getColumn('rating').eachCell((cell, rowNumber) => {
+      if (rowNumber > 1) {
+        const rating = parseInt(cell.value);
+        if (rating === 5) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } };
+          cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+        } else if (rating >= 4) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+          cell.font = { color: { argb: 'FFFFFFFF' } };
+        } else if (rating === 3) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF59E0B' } };
+        } else if (rating <= 2) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEF4444' } };
+          cell.font = { color: { argb: 'FFFFFFFF' } };
       } else if (rating === 1) {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEF4444' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF97316' } };
         cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
       }
     }
@@ -229,7 +242,7 @@ async function generateFeedbackExcel(feedbackData) {
   });
 
   // Add borders
-  worksheet.eachRow((row, rowNumber) => {
+  worksheet.eachRow((row) => {
     row.eachCell(cell => {
       cell.border = {
         top: { style: 'thin' },
@@ -239,6 +252,10 @@ async function generateFeedbackExcel(feedbackData) {
       };
     });
   });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  return buffer;
+}
 
   // Add summary statistics at the bottom
   const summaryRow = worksheet.rowCount + 2;

@@ -53,7 +53,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.warn(`⚠️ CORS blocked for origin: ${origin}`);
+      console.warn(` CORS blocked for origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -180,35 +180,35 @@ app.use((err, req, res, next) => {
 async function startServer() {
   try {
     console.log('=================================');
-    console.log('🎨 ChitraVaani API Server');
+    console.log(' ChitraVaani API Server');
     console.log('=================================');
     
     // Initialize database
-    console.log('📊 Initializing database...');
+    console.log(' Initializing database...');
     await initDatabase();
     
     // Start server
     app.listen(PORT, () => {
       console.log('=================================');
-      console.log(`✅ Server running on port ${PORT}`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔒 Security: Enhanced (Helmet, CORS, Rate Limiting)`);
-      console.log(`📡 API URL: http://localhost:${PORT}`);
-      console.log(`🏥 Health Check: http://localhost:${PORT}/api/health`);
+      console.log(` Server running on port ${PORT}`);
+      console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(` Security: Enhanced (Helmet, CORS, Rate Limiting)`);
+      console.log(` API URL: http://localhost:${PORT}`);
+      console.log(` Health Check: http://localhost:${PORT}/api/health`);
       console.log('=================================');
-      console.log('🔐 Security Features Enabled:');
-      console.log('   ✓ JWT Authentication');
-      console.log('   ✓ Role-Based Authorization');
-      console.log('   ✓ Input Validation (Joi)');
-      console.log('   ✓ Rate Limiting');
-      console.log('   ✓ CORS Protection');
-      console.log('   ✓ Security Headers (Helmet)');
-      console.log('   ✓ Password Hashing (bcrypt)');
-      console.log('   ✓ SQL Injection Prevention');
+      console.log(' Security Features Enabled:');
+      console.log('    JWT Authentication');
+      console.log('    Role-Based Authorization');
+      console.log('    Input Validation (Joi)');
+      console.log('    Rate Limiting');
+      console.log('    CORS Protection');
+      console.log('    Security Headers (Helmet)');
+      console.log('    Password Hashing (bcrypt)');
+      console.log('    SQL Injection Prevention');
       console.log('=================================');
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error(' Failed to start server:', error);
     process.exit(1);
   }
 }

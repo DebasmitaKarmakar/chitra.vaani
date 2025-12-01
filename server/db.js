@@ -2,15 +2,15 @@ const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-console.log('🔧 Initializing database connection...');
-console.log('📍 Host:', process.env.DB_HOST);
-console.log('👤 User:', process.env.DB_USER);
-console.log('🗄️  Database:', process.env.DB_NAME);
-console.log('🔌 Port:', process.env.DB_PORT);
+console.log(' Initializing database connection...');
+console.log(' Host:', process.env.DB_HOST);
+console.log(' User:', process.env.DB_USER);
+console.log('  Database:', process.env.DB_NAME);
+console.log(' Port:', process.env.DB_PORT);
 
 // Validate environment variables
 if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_NAME) {
-  console.error('❌ Missing required database environment variables!');
+  console.error(' Missing required database environment variables!');
   console.error('Please check your .env file has: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME');
   process.exit(1);
 }
@@ -42,26 +42,26 @@ async function testConnection(retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
       const connection = await promisePool.getConnection();
-      console.log('✅ MySQL Database connected successfully (SSL enabled)');
+      console.log(' MySQL Database connected successfully (SSL enabled)');
       connection.release();
       return true;
     } catch (err) {
-      console.error(`❌ Database connection attempt ${i + 1}/${retries} failed:`, err.message);
+      console.error(` Database connection attempt ${i + 1}/${retries} failed:`, err.message);
       if (i < retries - 1) {
-        console.log('⏳ Retrying in 3 seconds...');
+        console.log(' Retrying in 3 seconds...');
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
     }
   }
-  console.error('💥 Failed to connect to database after', retries, 'attempts');
-  console.error('🔍 Please verify your Aiven database credentials and network access');
+  console.error('Failed to connect to database after', retries, 'attempts');
+  console.error(' Please verify your Aiven database credentials and network access');
   return false;
 }
 
 // Initialize database tables
 async function initDatabase() {
   try {
-    console.log('🔧 Initializing database tables...');
+    console.log('Initializing database tables...');
 
     // Test connection first
     const connected = await testConnection();
@@ -78,7 +78,7 @@ async function initDatabase() {
         INDEX idx_name (name)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-    console.log('✅ Categories table ready');
+    console.log(' Categories table ready');
 
     // Create artworks table
     await promisePool.query(`
@@ -98,7 +98,7 @@ async function initDatabase() {
         INDEX idx_created (created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-    console.log('✅ Artworks table ready');
+    console.log(' Artworks table ready');
 
     // Create orders table
     await promisePool.query(`
@@ -120,7 +120,7 @@ async function initDatabase() {
         INDEX idx_created (created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-    console.log('✅ Orders table ready');
+    console.log(' Orders table ready');
 
     // Create admin table
     await promisePool.query(`
@@ -132,7 +132,7 @@ async function initDatabase() {
         INDEX idx_username (username)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-    console.log('✅ Admin table ready');
+    console.log(' Admin table ready');
 
     // Create feedback table
     await promisePool.query(`
@@ -151,7 +151,7 @@ async function initDatabase() {
         INDEX idx_created (created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-    console.log('✅ Feedback table ready');
+    console.log(' Feedback table ready');
 
     // Check and insert default categories
     const [categoryCount] = await promisePool.query('SELECT COUNT(*) as count FROM categories');
@@ -168,9 +168,9 @@ async function initDatabase() {
           }
         }
       }
-      console.log('✅ Default categories inserted');
+      console.log(' Default categories inserted');
     } else {
-      console.log('ℹ️  Categories already exist:', categoryCount[0].count);
+      console.log('  Categories already exist:', categoryCount[0].count);
     }
 
     // Check if admin user exists (read from environment variables)
@@ -178,7 +178,7 @@ async function initDatabase() {
     const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (!adminUsername || !adminPassword) {
-      console.warn('⚠️  WARNING: ADMIN_USERNAME and ADMIN_PASSWORD not set in .env file');
+      console.warn('️  WARNING: ADMIN_USERNAME and ADMIN_PASSWORD not set in .env file');
       console.warn('   Admin user will not be created automatically');
       console.warn('   Please set these environment variables and restart');
     } else {
@@ -189,7 +189,7 @@ async function initDatabase() {
 
       if (existingAdmin.length === 0) {
         // Create new admin user from environment variables
-        console.log('🔐 Creating admin user from environment variables...');
+        console.log(' Creating admin user from environment variables...');
         const hashedPassword = await bcrypt.hash(adminPassword, 10);
         
         await promisePool.query(
@@ -197,55 +197,55 @@ async function initDatabase() {
           [adminUsername, hashedPassword]
         );
         
-        console.log('✅ Admin user created successfully');
-        console.log('👤 Username:', adminUsername);
-        console.log('🔑 Password: ******** (hidden for security)');
-        console.log('⚠️  IMPORTANT: Keep .env file secure and never commit to git!');
+        console.log(' Admin user created successfully');
+        console.log(' Username:', adminUsername);
+        console.log(' Password: ******** (hidden for security)');
+        console.log('  IMPORTANT: Keep .env file secure and never commit to git!');
       } else {
-        console.log('ℹ️  Admin user already exists:', adminUsername);
+        console.log('  Admin user already exists:', adminUsername);
       }
     }
 
     // Show all admin usernames (without showing passwords)
     const [adminList] = await promisePool.query('SELECT username, created_at FROM admin');
     if (adminList.length > 0) {
-      console.log('👥 Admin users in database:');
+      console.log(' Admin users in database:');
       adminList.forEach(admin => {
         console.log(`   - ${admin.username} (created: ${new Date(admin.created_at).toLocaleDateString()})`);
       });
     } else {
-      console.log('⚠️  No admin users found in database');
+      console.log('  No admin users found in database');
     }
 
     // Show table summary
     const [tables] = await promisePool.query('SHOW TABLES');
-    console.log('📊 Database tables:', tables.map(t => Object.values(t)[0]).join(', '));
+    console.log(' Database tables:', tables.map(t => Object.values(t)[0]).join(', '));
 
     // Show record counts
     const [catCount] = await promisePool.query('SELECT COUNT(*) as count FROM categories');
     const [artCount] = await promisePool.query('SELECT COUNT(*) as count FROM artworks');
     const [ordCount] = await promisePool.query('SELECT COUNT(*) as count FROM orders');
     
-    console.log('📈 Database stats:');
+    console.log(' Database stats:');
     console.log('   - Categories:', catCount[0].count);
     console.log('   - Artworks:', artCount[0].count);
     console.log('   - Orders:', ordCount[0].count);
 
-    console.log('🎉 Database initialization complete!');
+    console.log(' Database initialization complete!');
     return true;
 
   } catch (error) {
-    console.error('❌ Database initialization error:', error);
-    console.error('📋 Error details:', error.message);
+    console.error(' Database initialization error:', error);
+    console.error(' Error details:', error.message);
     
     if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      console.error('🔐 Access denied. Check your DB_USER and DB_PASSWORD in .env');
+      console.error(' Access denied. Check your DB_USER and DB_PASSWORD in .env');
     } else if (error.code === 'ECONNREFUSED') {
-      console.error('🔌 Connection refused. Check if DB_HOST and DB_PORT are correct');
+      console.error(' Connection refused. Check if DB_HOST and DB_PORT are correct');
     } else if (error.code === 'ER_BAD_DB_ERROR') {
-      console.error('🗄️  Database does not exist. Check DB_NAME in .env (should be "defaultdb" for Aiven)');
+      console.error('  Database does not exist. Check DB_NAME in .env (should be "defaultdb" for Aiven)');
     } else if (error.code === 'ETIMEDOUT' || error.code === 'ENOTFOUND') {
-      console.error('🌐 Network timeout. Check your internet connection and firewall');
+      console.error(' Network timeout. Check your internet connection and firewall');
       console.error('   Make sure your IP is whitelisted in Aiven console');
     }
     
@@ -255,10 +255,10 @@ async function initDatabase() {
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('🛑 SIGTERM received, closing database connection...');
+  console.log(' SIGTERM received, closing database connection...');
   try {
     await pool.end();
-    console.log('✅ Database connection closed');
+    console.log(' Database connection closed');
   } catch (err) {
     console.error('Error closing pool:', err);
   }
@@ -266,10 +266,10 @@ process.on('SIGTERM', async () => {
 });
 
 process.on('SIGINT', async () => {
-  console.log('\n🛑 SIGINT received, closing database connection...');
+  console.log('\n SIGINT received, closing database connection...');
   try {
     await pool.end();
-    console.log('✅ Database connection closed');
+    console.log(' Database connection closed');
   } catch (err) {
     console.error('Error closing pool:', err);
   }

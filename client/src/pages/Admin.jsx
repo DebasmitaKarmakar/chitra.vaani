@@ -49,7 +49,7 @@ function Admin() {
 useEffect(() => {
   if (isLoggedIn && token && activeTab === 'dashboard') {
     const interval = setInterval(() => {
-      console.log('🔄 Auto-refreshing dashboard...')
+      console.log(' Auto-refreshing dashboard...')
       loadDashboardData(false)
     }, 30000) // Refresh every 30 seconds
 
@@ -263,7 +263,7 @@ const loadDashboardData = async (forceRefresh = false) => {
     console.log(' Dashboard data loaded successfully')
 
   } catch (error) {
-    console.error('❌ Error loading dashboard data:', error)
+    console.error(' Error loading dashboard data:', error)
     console.error('Error details:', error.response?.data)
     
     if (error.response && error.response.status === 401) {
@@ -613,7 +613,7 @@ const refreshAllData = async () => {
   if (!isLoggedIn) {
     return (
       <div className="container fade-in admin-page">
-        <div className="hero">
+        <div className="hero" style={{ padding: '5rem 2rem 4rem' }}>
           <h1>Admin Login</h1>
           <p>Choose your preferred login method</p>
         </div>
@@ -765,10 +765,14 @@ const refreshAllData = async () => {
       <h2>Dashboard Overview</h2>
       <button 
         className="btn" 
-        onClick={() => loadDashboardData(true)}
+        onClick={async () => {
+          console.log('Refresh button clicked')
+          await loadDashboardData(true)
+          alert('Dashboard refreshed successfully!')
+        }}
         style={{ padding: '0.6rem 1.2rem' }}
       >
-         Refresh Data
+        Refresh Data
       </button>
     </div>
     {dashboardStats ? (
@@ -1308,22 +1312,29 @@ const refreshAllData = async () => {
                 borderLeft: `4px solid ${borderColor}` 
               }}>
                 {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-                  <div>
-                    <h4>Feedback #{item.id}</h4>
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                      {[1,2,3,4,5].map(star => (
-                        <span key={star} style={{ 
-                          color: star <= rating ? '#fbbf24' : '#d1d5db', 
-                          fontSize: '1.2rem' 
-                        }}>
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <span style={{ color: '#666', fontSize: '0.9rem' }}>
-                    {new Date(createdAt).toLocaleString()}
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '0.3rem', 
+                  marginTop: '0.5rem',
+                  alignItems: 'center'
+                }}>
+                  {[1,2,3,4,5].map(star => (
+                    <span key={star} style={{ 
+                      color: star <= rating ? '#fbbf24' : '#d1d5db', 
+                      fontSize: '1.3rem',
+                      lineHeight: '1',
+                      display: 'inline-block'
+                    }}>
+                      ★
+                    </span>
+                  ))}
+                  <span style={{ 
+                    marginLeft: '0.5rem', 
+                    fontSize: '0.9rem', 
+                    color: '#6B7280',
+                    fontWeight: '600'
+                  }}>
+                    ({rating}/5)
                   </span>
                 </div>
 

@@ -95,7 +95,7 @@ function Contact() {
     setSubmitting(true)
 
     try {
-      console.log('📤 Submitting feedback to:', `${API_URL}/feedback`)
+      console.log(' Submitting feedback to:', `${API_URL}/feedback`)
       
       const payload = {
         customer_name: formData.customer_name.trim(),
@@ -106,7 +106,7 @@ function Contact() {
         rating: parseInt(formData.rating)
       }
 
-      console.log('📦 Payload:', payload)
+      console.log(' Payload:', payload)
 
       const response = await axios.post(`${API_URL}/feedback`, payload, {
         headers: {
@@ -115,7 +115,7 @@ function Contact() {
         timeout: 10000 // 10 second timeout
       })
 
-      console.log('✅ Success response:', response.data)
+      console.log(' Success response:', response.data)
       
       setSuccess(true)
       
@@ -133,7 +133,7 @@ function Contact() {
       setTimeout(() => setSuccess(false), 5000)
       
     } catch (error) {
-      console.error('❌ Submission error:', error)
+      console.error(' Submission error:', error)
       
       if (error.response) {
         console.error('Server response:', error.response.data)
@@ -163,8 +163,7 @@ function Contact() {
 
   return (
     <div className="container fade-in">
-      <div className="hero">
-        <h1>Get in Touch</h1>
+      <div className="hero" style={{ padding: '5rem 2rem 4rem' }}>        <h1>Get in Touch</h1>
         <p>Let's discuss your art needs or share your feedback</p>
       </div>
 
@@ -173,7 +172,7 @@ function Contact() {
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', margin: '2.5rem 0' }}>
           <div style={{ textAlign: 'center', padding: '2.5rem', background: '#f9f7f5', borderRadius: '12px' }}>
-            <h3 style={{ marginBottom: '1rem' }}>📱 WhatsApp</h3>
+            <h3 style={{ marginBottom: '1rem' }}>WhatsApp</h3>
             <p style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#2c2c2c', margin: '1rem 0' }}>
               +91-9436357001
             </p>
@@ -183,7 +182,7 @@ function Contact() {
           </div>
           
           <div style={{ textAlign: 'center', padding: '2.5rem', background: '#f9f7f5', borderRadius: '12px' }}>
-            <h3 style={{ marginBottom: '1rem' }}>📧 Email</h3>
+            <h3 style={{ marginBottom: '1rem' }}>Email</h3>
             <p style={{ fontSize: '1.1rem', color: '#555', margin: '1rem 0', wordBreak: 'break-word' }}>
               {email}
             </p>
@@ -193,7 +192,7 @@ function Contact() {
           </div>
           
           <div style={{ textAlign: 'center', padding: '2.5rem', background: '#f9f7f5', borderRadius: '12px' }}>
-            <h3 style={{ marginBottom: '1rem' }}>📷 Instagram</h3>
+            <h3 style={{ marginBottom: '1rem' }}> Instagram</h3>
             <p style={{ fontSize: '1.1rem', color: '#555', margin: '1rem 0' }}>
               {instagram}
             </p>
@@ -218,7 +217,7 @@ function Contact() {
           border: '2px solid #0ea5e9'
         }}>
           <h2 style={{ textAlign: 'center', marginBottom: '1rem', color: '#0369a1' }}>
-            💬 Share Your Feedback
+             Share Your Feedback
           </h2>
           <p style={{ textAlign: 'center', color: '#666', marginBottom: '2rem' }}>
             Your feedback helps us improve our services and artwork
@@ -315,7 +314,7 @@ function Contact() {
                 color: '#991b1b',
                 border: '2px solid #ef4444'
               }}>
-                <strong>❌ Error:</strong> {error}
+                <strong> Error:</strong> {error}
               </div>
             )}
 
@@ -328,7 +327,7 @@ function Contact() {
                 color: '#065f46',
                 border: '2px solid #10b981'
               }}>
-                <strong>✅ Success!</strong> Thank you for your feedback! We appreciate your input.
+                <strong> Success!</strong> Thank you for your feedback! We appreciate your input.
               </div>
             )}
 
@@ -343,7 +342,7 @@ function Contact() {
                 opacity: submitting ? 0.7 : 1
               }}
             >
-              {submitting ? '📤 Submitting...' : '📨 Submit Feedback'}
+              {submitting ? ' Submitting...' : ' Submit Feedback'}
             </button>
 
             <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666', textAlign: 'center' }}>

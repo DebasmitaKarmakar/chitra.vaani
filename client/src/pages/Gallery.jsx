@@ -48,7 +48,7 @@ function Gallery() {
 
   return (
     <div className="container fade-in">
-      <div className="hero">
+      <div className="hero" style={{ padding: '5rem 2rem 4rem' }}>
         <h1>Art Gallery</h1>
         <p>Explore our collection of handcrafted artworks</p>
       </div>

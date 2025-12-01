@@ -46,7 +46,7 @@ function Artwork() {
   // WhatsApp order (existing functionality)
   const handleWhatsAppOrder = () => {
     if (!orderData.customerName || !orderData.customerPhone || !orderData.deliveryAddress) {
-      alert('⚠️ Please fill: Name, Phone, and Address first');
+      alert(' Please fill: Name, Phone, and Address first');
       return;
     }
 
@@ -102,7 +102,7 @@ function Artwork() {
         }
       }
 
-      console.log('📦 Order payload:', orderPayload)
+      console.log(' Order payload:', orderPayload)
 
       const response = await axios.post(`${API_URL}/orders`, orderPayload, {
         headers: {
@@ -111,7 +111,7 @@ function Artwork() {
         timeout: 10000
       })
 
-      console.log('✅ Order submitted:', response.data)
+      console.log(' Order submitted:', response.data)
 
       setSubmitSuccess(true)
       
@@ -129,7 +129,7 @@ function Artwork() {
       setTimeout(() => setSubmitSuccess(false), 5000)
 
     } catch (error) {
-      console.error('❌ Order submission error:', error)
+      console.error(' Order submission error:', error)
       
       if (error.response?.data?.error) {
         setSubmitError(error.response.data.error)
@@ -150,7 +150,7 @@ function Artwork() {
     const shareUrl = `${window.location.origin}/artwork/${artwork.id}`
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert('🔗 Link copied to clipboard!\n\n' + shareUrl)
+        alert('Link copied to clipboard!\n\n' + shareUrl)
       }).catch(() => {
         prompt('Copy this link:', shareUrl)
       })
@@ -190,7 +190,7 @@ function Artwork() {
               src={photos[currentPhotoIndex]?.url} 
               alt={artwork.title}
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              onError={(e) => e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27800%27 height=%27600%27%3E%3Crect fill=%27%23e8ddd0%27 width=%27800%27 height=%27600%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-size=%2780%27 fill=%27%238b7355%27%3E🎨%3C/text%3E%3C/svg%3E'}
+              onError={(e) => e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27800%27 height=%27600%27%3E%3Crect fill=%27%23e8ddd0%27 width=%27800%27 height=%27600%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-size=%2780%27 fill=%27%238b7355%27%3E%3C/text%3E%3C/svg%3E'}
             />
             
             {photos.length > 1 && (
@@ -270,15 +270,15 @@ function Artwork() {
 
         {/* Share Button */}
         <div style={{ background: '#f0f8ff', padding: '1.5rem', borderRadius: '8px', textAlign: 'center', marginBottom: '2rem' }}>
-          <h4 style={{ marginBottom: '1rem' }}>🔗 Share This Artwork</h4>
+          <h4 style={{ marginBottom: '1rem' }}> Share This Artwork</h4>
           <button className="btn" onClick={handleShareArtwork} style={{ background: '#4a90e2' }}>
-            📋 Copy Share Link
+             Copy Share Link
           </button>
         </div>
 
         {/* Order Form - DATABASE + WhatsApp */}
         <div style={{ background: 'linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%)', padding: '2rem', borderRadius: '12px', border: '2px solid #38a169' }}>
-          <h3 style={{ marginBottom: '1.5rem', color: '#2f855a' }}>🛒 Place Your Order</h3>
+          <h3 style={{ marginBottom: '1.5rem', color: '#2f855a' }}> Place Your Order</h3>
           
           <form onSubmit={handleDatabaseOrder}>
             <h4 style={{ marginBottom: '1rem', color: '#2d3748' }}>Order Details</h4>
@@ -369,7 +369,7 @@ function Artwork() {
                 color: '#991b1b',
                 border: '2px solid #ef4444'
               }}>
-                <strong>❌ Error:</strong> {submitError}
+                <strong> Error:</strong> {submitError}
               </div>
             )}
 
@@ -382,7 +382,7 @@ function Artwork() {
                 color: '#065f46',
                 border: '2px solid #10b981'
               }}>
-                <strong>✅ Success!</strong> Your order has been placed! We'll contact you soon.
+                <strong> Success!</strong> Your order has been placed! We'll contact you soon.
               </div>
             )}
 
@@ -393,22 +393,26 @@ function Artwork() {
               onClick={handleWhatsAppOrder}
               disabled={submitting}
               style={{ 
-                background: '#25D366', 
-                fontSize: '1.2rem', 
-                padding: '1.2rem',
+                background: 'linear-gradient(135deg, #25D366 0%, #0F7A4F 100%)',
+                fontSize: '1.3rem', 
+                padding: '1.4rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.5rem',
-                width: '100%'
+                gap: '0.8rem',
+                width: '100%',
+                boxShadow: '0 8px 30px rgba(15, 122, 79, 0.5)',
+                border: '3px solid #25D366',
+                fontWeight: '700',
+                letterSpacing: '0.5px'
               }}
             >
-              💬 Order via WhatsApp (Instant)
+               Order via WhatsApp 
             </button>
 
             <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666', textAlign: 'center' }}>
-              l<br/>
-              💬 WhatsApp orders get instant response
+              <br/>
+               WhatsApp orders get instant response
             </p>
           </form>
         </div>

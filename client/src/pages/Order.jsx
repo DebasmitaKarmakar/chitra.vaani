@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import '../assets/styles.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://chitravaani-api.vercel.app/api'
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '1234567890'
@@ -21,9 +22,16 @@ function Order() {
     details: ''
   })
 
-  const [errors, setErrors] = useState({})
+const [errors, setErrors] = useState({})
 
-  const validateForm = () => {
+// ADD THIS FIXED FUNCTION
+const switchOrderType = (type) => {
+  setOrderType(type);
+  setErrors({});
+};
+
+const validateForm = () => {
+
     const newErrors = {}
 
     if (!formData.customerName || formData.customerName.trim().length < 2) {
@@ -72,129 +80,149 @@ function Order() {
     }
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    
-    if (!validateForm()) {
-      return
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    let message = ''
-    
-    if (orderType === 'custom') {
-      message = `Hi! I'd like a Custom Artwork\n\nMy Idea:\n${formData.idea}\n\nDetails:\nMedium: ${formData.medium || 'Any'}\nSize: ${formData.size || 'Flexible'}\nDeadline: ${formData.deadline || 'Flexible'}\nBudget: ${formData.budget || 'Flexible'}\n\nMy Details:\nName: ${formData.customerName}\nPhone: ${formData.customerPhone}\nEmail: ${formData.customerEmail}\nAddress: ${formData.deliveryAddress || 'Will provide later'}`
-    } else {
-      message = `Hi! I'd like a Bulk Order\n\nOrganization: ${formData.orgName}\nItem Type: ${formData.itemType}\nQuantity: ${formData.quantity}\n\nDetails:\n${formData.details}\n\nTimeline & Budget:\nDeadline: ${formData.deadline || 'Flexible'}\nBudget: ${formData.budget || 'Please quote'}\n\nContact Person:\nName: ${formData.customerName}\nPhone: ${formData.customerPhone}\nEmail: ${formData.customerEmail}`
-    }
-    
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank')
+  if (!validateForm()) return;
+
+  // Build the WhatsApp message FIRST
+  const message = orderType === 'custom'
+    ? `Hi! I'd like a Custom Artwork
+
+My Idea:
+${formData.idea}
+
+Details:
+Medium: ${formData.medium || 'Any'}
+Size: ${formData.size || 'Flexible'}
+Deadline: ${formData.deadline || 'Flexible'}
+Budget: ${formData.budget || 'Flexible'}
+
+My Details:
+Name: ${formData.customerName}
+Phone: ${formData.customerPhone}
+Email: ${formData.customerEmail}
+Address: ${formData.deliveryAddress || 'Will provide later'}`
+    : `Hi! I'd like a Bulk Order
+
+Organization: ${formData.orgName}
+Item Type: ${formData.itemType}
+Quantity: ${formData.quantity}
+
+Details:
+${formData.details}
+
+Timeline & Budget:
+Deadline: ${formData.deadline || 'Flexible'}
+Budget: ${formData.budget || 'Please quote'}
+
+Contact Person:
+Name: ${formData.customerName}
+Phone: ${formData.customerPhone}
+Email: ${formData.customerEmail}`;
+
+  // Prepare order payload for backend
+  const payload = {
+    order_type: orderType,
+    customer_name: formData.customerName,
+    customer_email: formData.customerEmail,
+    customer_phone: formData.customerPhone,
+    delivery_address: formData.deliveryAddress,
+    order_details:
+      orderType === "custom"
+        ? { idea: formData.idea, medium: formData.medium, size: formData.size }
+        : { orgName: formData.orgName, itemType: formData.itemType, quantity: formData.quantity, details: formData.details }
+  };
+
+  //  Try saving order in database BUT NEVER BLOCK WhatsApp redirect
+  try {
+    await fetch(`${API_URL}/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.error("Order saving failed:", err);
+    // Even if backend fails, WhatsApp must still open
   }
 
-  const switchOrderType = (type) => {
-    setOrderType(type)
-    setErrors({})
-  }
+  //  ALWAYS open WhatsApp no matter what
+  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank");
+
+  alert("Order placed! Redirecting to WhatsApp…");
+};
+
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-      <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Special Orders</h1>
-        <p style={{ fontSize: '1.2rem', color: '#666' }}>Custom artwork or bulk orders for organizations</p>
+    <div style={{ backgroundColor: '#f7f7f8' }}>
+
+      {/*  Purple Gradient Hero Section */}
+      <div className="hero" style={{ padding: '5rem 2rem 4rem' }}>
+
+        <h1 style={{ fontSize: '3rem', fontWeight: '700' }}>Special Orders</h1>
+        <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>
+          Custom artwork or bulk orders for organizations
+        </p>
       </div>
 
-      <div style={{ 
-        display: 'flex', 
-        gap: '1rem', 
-        marginBottom: '3rem', 
-        justifyContent: 'center',
-        flexWrap: 'wrap'
-      }}>
-        <button
-          onClick={() => switchOrderType('custom')}
-          style={{
-            padding: '1rem 2rem',
-            fontSize: '1.1rem',
-            borderRadius: '8px',
-            border: orderType === 'custom' ? '3px solid #8b7355' : '2px solid #ddd',
-            background: orderType === 'custom' ? '#f9f7f5' : 'white',
-            cursor: 'pointer',
-            fontWeight: orderType === 'custom' ? 600 : 400,
-            transition: 'all 0.3s ease'
-          }}
-        >
-          Custom Artwork
-        </button>
-        <button
-          onClick={() => switchOrderType('bulk')}
-          style={{
-            padding: '1rem 2rem',
-            fontSize: '1.1rem',
-            borderRadius: '8px',
-            border: orderType === 'bulk' ? '3px solid #8b7355' : '2px solid #ddd',
-            background: orderType === 'bulk' ? '#f9f7f5' : 'white',
-            cursor: 'pointer',
-            fontWeight: orderType === 'bulk' ? 600 : 400,
-            transition: 'all 0.3s ease'
-          }}
-        >
-          Bulk Orders
-        </button>
-      </div>
+      {/* Main Content Container */}
+      <div className="container info-section">
 
-      <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-          gap: '2rem', 
-          marginBottom: '3rem' 
-        }}>
-          {orderType === 'custom' ? (
-            <>
-              <div style={{ background: '#f9f7f5', padding: '2rem', borderRadius: '12px', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>💡</div>
-                <h3>Share Your Idea</h3>
-                <p>Tell us your vision</p>
-              </div>
-              <div style={{ background: '#f9f7f5', padding: '2rem', borderRadius: '12px', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎨</div>
-                <h3>We Create</h3>
-                <p>Personalized artwork</p>
-              </div>
-              <div style={{ background: '#f9f7f5', padding: '2rem', borderRadius: '12px', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📦</div>
-                <h3>Safe Delivery</h3>
-                <p>Secure packaging</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ background: '#f9f7f5', padding: '2rem', borderRadius: '12px', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>💰</div>
-                <h3>Special Pricing</h3>
-                <p>Competitive rates</p>
-              </div>
-              <div style={{ background: '#f9f7f5', padding: '2rem', borderRadius: '12px', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>✨</div>
-                <h3>Consistent Quality</h3>
-                <p>Uniform excellence</p>
-              </div>
-              <div style={{ background: '#f9f7f5', padding: '2rem', borderRadius: '12px', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⏰</div>
-                <h3>Timely Delivery</h3>
-                <p>Meet your deadlines</p>
-              </div>
-            </>
-          )}
+
+        {/* Tabs */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            justifyContent: 'center',
+            marginBottom: '2rem'
+          }}
+        >
+          <button
+            onClick={() => switchOrderType('custom')}
+            style={{
+              padding: '1rem 2rem',
+              fontSize: '1.1rem',
+              borderRadius: '8px',
+              border: orderType === 'custom' ? '3px solid #6a5acd' : '2px solid #ccc',
+              background: orderType === 'custom' ? '#f3f0ff' : 'white',
+              cursor: 'pointer',
+              fontWeight: 600,
+              transition: '0.3s'
+            }}
+          >
+            Custom Artwork
+          </button>
+
+          <button
+            onClick={() => switchOrderType('bulk')}
+            style={{
+              padding: '1rem 2rem',
+              fontSize: '1.1rem',
+              borderRadius: '8px',
+              border: orderType === 'bulk' ? '3px solid #6a5acd' : '2px solid #ccc',
+              background: orderType === 'bulk' ? '#f3f0ff' : 'white',
+              cursor: 'pointer',
+              fontWeight: 600,
+              transition: '0.3s'
+            }}
+          >
+            Bulk Orders
+          </button>
         </div>
 
-        <div onSubmit={handleSubmit}>
-          <h3 style={{ marginBottom: '1.5rem' }}>
-            {orderType === 'custom' ? 'Request Your Custom Artwork' : 'Request a Bulk Order Quote'}
+        {/* Form Section */}
+        <div>
+
+          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.6rem', fontWeight: 700 }}>
+            {orderType === 'custom'
+              ? 'Request Your Custom Artwork'
+              : 'Request a Bulk Order Quote'}
           </h3>
 
           {orderType === 'custom' && (
             <>
-              <div style={{ marginBottom: '1.5rem' }}>
+              <div className="form-group">
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
                   Your Idea / Vision *
                 </label>
@@ -254,105 +282,101 @@ function Order() {
             </>
           )}
 
-          {orderType === 'bulk' && (
-            <>
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
-                  Organization / Institution Name *
-                </label>
-                <input
-                  type="text"
-                  name="orgName"
-                  value={formData.orgName}
-                  onChange={handleChange}
-                  placeholder="e.g., ABC College, XYZ Company"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '6px',
-                    border: `2px solid ${errors.orgName ? '#ef4444' : '#ddd'}`,
-                    fontSize: '1rem'
-                  }}
-                />
-                {errors.orgName && <span style={{ color: '#ef4444', fontSize: '0.9rem' }}>{errors.orgName}</span>}
-              </div>
+{orderType === "bulk" && (
+  <>
+    <div className="form-group">
+      <label>Organization / Institution Name *</label>
+      <input
+        type="text"
+        name="orgName"
+        value={formData.orgName}
+        onChange={handleChange}
+        placeholder="e.g., ABC College, XYZ Company"
+        style={{
+          width: '100%',
+          padding: '0.75rem',
+          borderRadius: '6px',
+          border: `2px solid ${errors.orgName ? '#ef4444' : '#ddd'}`,
+          fontSize: '1rem'
+        }}
+      />
+      {errors.orgName && <span style={{ color: '#ef4444' }}>{errors.orgName}</span>}
+    </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
-                    Item Type *
-                  </label>
-                  <select
-                    name="itemType"
-                    value={formData.itemType}
-                    onChange={handleChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '6px',
-                      border: `2px solid ${errors.itemType ? '#ef4444' : '#ddd'}`,
-                      fontSize: '1rem'
-                    }}
-                  >
-                    <option value="">Select item type</option>
-                    <option value="Canvas Paintings">Canvas Paintings</option>
-                    <option value="Posters">Art Posters</option>
-                    <option value="Greeting Cards">Greeting Cards</option>
-                    <option value="Certificates">Certificates</option>
-                    <option value="Wall Murals">Wall Murals</option>
-                    <option value="Event Decorations">Event Decorations</option>
-                    <option value="Trophies/Awards">Trophies/Awards</option>
-                    <option value="Custom Merchandise">Custom Merchandise</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  {errors.itemType && <span style={{ color: '#ef4444', fontSize: '0.9rem' }}>{errors.itemType}</span>}
-                </div>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+      gap: '1.5rem',
+      marginBottom: '1.5rem'
+    }}>
+      <div>
+        <label>Item Type *</label>
+        <select
+          name="itemType"
+          value={formData.itemType}
+          onChange={handleChange}
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            borderRadius: '6px',
+            border: `2px solid ${errors.itemType ? '#ef4444' : '#ddd'}`,
+            fontSize: '1rem'
+          }}
+        >
+          <option value="">Select item type</option>
+          <option value="Canvas Paintings">Canvas Paintings</option>
+          <option value="Posters">Art Posters</option>                    <option value="Greeting Cards">Greeting Cards</option>
+          <option value="Certificates">Certificates</option>
+          <option value="Wall Murals">Wall Murals</option>
+          <option value="Event Decorations">Event Decorations</option>
+          <option value="Trophies/Awards">Trophies/Awards</option>
+          <option value="Custom Merchandise">Custom Merchandise</option>
+          <option value="Other">Other</option>
+          </select>
+        {errors.itemType && <span style={{ color: '#ef4444' }}>{errors.itemType}</span>}
+      </div>
 
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
-                    Quantity *
-                  </label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    min="2"
-                    value={formData.quantity}
-                    onChange={handleChange}
-                    placeholder="Minimum 2 pieces"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '6px',
-                      border: `2px solid ${errors.quantity ? '#ef4444' : '#ddd'}`,
-                      fontSize: '1rem'
-                    }}
-                  />
-                  {errors.quantity && <span style={{ color: '#ef4444', fontSize: '0.9rem' }}>{errors.quantity}</span>}
-                </div>
-              </div>
+      <div>
+        <label>Quantity *</label>
+        <input
+          type="number"
+          name="quantity"
+          value={formData.quantity}
+          onChange={handleChange}
+          placeholder="Minimum 2"
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            borderRadius: '6px',
+            border: `2px solid ${errors.quantity ? '#ef4444' : '#ddd'}`,
+            fontSize: '1rem'
+          }}
+        />
+        {errors.quantity && <span style={{ color: '#ef4444' }}>{errors.quantity}</span>}
+      </div>
+    </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
-                  Project Details *
-                </label>
-                <textarea
-                  name="details"
-                  rows="5"
-                  value={formData.details}
-                  onChange={handleChange}
-                  placeholder="Please describe: design requirements, colors, sizes, themes..."
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '6px',
-                    border: `2px solid ${errors.details ? '#ef4444' : '#ddd'}`,
-                    fontSize: '1rem'
-                  }}
-                />
-                {errors.details && <span style={{ color: '#ef4444', fontSize: '0.9rem' }}>{errors.details}</span>}
-              </div>
-            </>
-          )}
+    <div className="form-group">
+      <label>Project Details *</label>
+      <textarea
+        name="details"
+        rows="4"
+        value={formData.details}
+        onChange={handleChange}
+        placeholder="Describe what you need in at least 20 characters"
+        style={{
+          width: '100%',
+          padding: '0.75rem',
+          borderRadius: '6px',
+          border: `2px solid ${errors.details ? '#ef4444' : '#ddd'}`,
+          fontSize: '1rem'
+        }}
+      />
+      {errors.details && <span style={{ color: '#ef4444' }}>{errors.details}</span>}
+    </div>
+  </>
+)}
+
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
             <div>
@@ -385,7 +409,8 @@ function Order() {
 
           <h4 style={{ margin: '2rem 0 1rem' }}>Your Details</h4>
 
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div className="form-group">
+
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Name *</label>
             <input
               type="text"
@@ -404,7 +429,8 @@ function Order() {
             {errors.customerName && <span style={{ color: '#ef4444', fontSize: '0.9rem' }}>{errors.customerName}</span>}
           </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div className="form-group">
+
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Email *</label>
             <input
               type="email"
@@ -423,7 +449,8 @@ function Order() {
             {errors.customerEmail && <span style={{ color: '#ef4444', fontSize: '0.9rem' }}>{errors.customerEmail}</span>}
           </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div className="form-group">
+
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Phone *</label>
             <input
               type="tel"
@@ -444,7 +471,8 @@ function Order() {
           </div>
 
           {orderType === 'custom' && (
-            <div style={{ marginBottom: '1.5rem' }}>
+            <div className="form-group">
+
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
                 Delivery Address (Optional)
               </label>
@@ -461,22 +489,31 @@ function Order() {
 
           <button
             onClick={handleSubmit}
+            className="btn btn-whatsapp"
             style={{
               width: '100%',
-              background: '#25D366',
-              color: 'white',
+              padding: '1.3rem',
               fontSize: '1.2rem',
-              padding: '1.2rem',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 600
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.8rem',
+              marginTop: '1rem',
+              background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+              boxShadow: '0 6px 30px rgba(37, 211, 102, 0.4)'
             }}
           >
             Send via WhatsApp
           </button>
 
-          <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666', textAlign: 'center' }}>
+          <p style={{ 
+            marginTop: '1rem', 
+            fontSize: '0.95rem', 
+            color: '#666', 
+            textAlign: 'center',
+            borderTop: '1px solid #E5E7EB',
+            paddingTop: '1rem'
+          }}>
             Click to open WhatsApp with your order details pre-filled
           </p>
          </div>

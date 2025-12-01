@@ -89,7 +89,7 @@ body {
 /* Hero Section */
 .hero {
   text-align: center;
-  padding: 6rem 2rem 4rem;
+  padding: 5rem 2rem 4rem;
   background: var(--gradient);
   color: var(--white);
   position: relative;

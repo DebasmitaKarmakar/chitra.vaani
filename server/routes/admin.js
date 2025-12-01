@@ -20,7 +20,7 @@ const loginLimiter = rateLimit({
 // Admin login endpoint with rate limiting and validation
 router.post('/login', loginLimiter, validate('login'), async (req, res) => {
   try {
-    console.log('🔐 Login attempt received');
+    console.log(' Login attempt received');
     const { username, password } = req.body;
 
     // Get admin from database
@@ -30,7 +30,7 @@ router.post('/login', loginLimiter, validate('login'), async (req, res) => {
     );
 
     if (admins.length === 0) {
-      console.log('❌ Admin not found');
+      console.log(' Admin not found');
       // Generic error to prevent username enumeration
       return res.status(401).json({ 
         error: 'Invalid credentials' 
@@ -38,19 +38,19 @@ router.post('/login', loginLimiter, validate('login'), async (req, res) => {
     }
 
     const admin = admins[0];
-    console.log('✅ Admin found:', admin.username);
+    console.log(' Admin found:', admin.username);
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
 
     if (!isPasswordValid) {
-      console.log('❌ Password incorrect');
+      console.log(' Password incorrect');
       return res.status(401).json({ 
         error: 'Invalid credentials' 
       });
     }
 
-    console.log('✅ Password correct, generating token...');
+    console.log(' Password correct, generating token...');
 
     // Generate JWT token with role
     const token = jwt.sign(
@@ -63,7 +63,7 @@ router.post('/login', loginLimiter, validate('login'), async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    console.log('✅ Login successful for:', admin.username);
+    console.log(' Login successful for:', admin.username);
 
     res.json({
       message: 'Login successful',
@@ -76,7 +76,7 @@ router.post('/login', loginLimiter, validate('login'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('💥 Login error:', error);
+    console.error(' Login error:', error);
     res.status(500).json({ 
       error: 'Login failed. Please try again.' 
     });
@@ -130,7 +130,7 @@ router.post('/change-password', requireAdmin, validate('changePassword'), async 
       [hashedPassword, req.user.id]
     );
 
-    console.log('🔑 Password changed for:', admin.username);
+    console.log(' Password changed for:', admin.username);
 
     res.json({ message: 'Password changed successfully' });
 
@@ -318,11 +318,11 @@ router.get('/export/artworks', requireAdmin, async (req, res) => {
 });
 
 // Export feedback (protected, admin only) - CORRECTED VERSION
+// Export feedback (protected, admin only)
 router.get('/export/feedback', requireAdmin, async (req, res) => {
   try {
     console.log('Starting feedback export...');
     
-    // Fetch all feedback
     const [feedback] = await promisePool.query(`
       SELECT * FROM feedback 
       ORDER BY created_at DESC
@@ -330,61 +330,110 @@ router.get('/export/feedback', requireAdmin, async (req, res) => {
 
     console.log(`Found ${feedback.length} feedback records`);
 
-    // If no feedback exists, return empty file with headers only
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Customer Feedback');
+
+    // Define columns
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Customer Name', key: 'customer_name', width: 25 },
+      { header: 'Email', key: 'customer_email', width: 30 },
+      { header: 'Phone', key: 'customer_phone', width: 15 },
+      { header: 'Subject', key: 'subject', width: 30 },
+      { header: 'Message', key: 'message', width: 50 },
+      { header: 'Rating', key: 'rating', width: 10 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Submitted', key: 'created_at', width: 20 }
+    ];
+
+    // Style header
+    worksheet.getRow(1).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF6366F1' }
+    };
+
     if (feedback.length === 0) {
-      const ExcelJS = require('exceljs');
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Customer Feedback');
-
-      worksheet.columns = [
-        { header: 'Feedback ID', key: 'id', width: 12 },
-        { header: 'Customer Name', key: 'customer_name', width: 25 },
-        { header: 'Email', key: 'customer_email', width: 30 },
-        { header: 'Phone', key: 'customer_phone', width: 15 },
-        { header: 'Subject', key: 'subject', width: 30 },
-        { header: 'Message', key: 'message', width: 50 },
-        { header: 'Rating', key: 'rating', width: 10 },
-        { header: 'Status', key: 'status', width: 15 },
-        { header: 'Submitted On', key: 'created_at', width: 20 }
-      ];
-
-      // Style header
-      worksheet.getRow(1).font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
-      worksheet.getRow(1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF6366F1' }
-      };
-
-      // Add note
+      // Add empty message
       worksheet.addRow({});
-      worksheet.addRow({ id: 'No feedback data available yet' });
+      const emptyRow = worksheet.addRow({ 
+        id: 'No feedback data available yet' 
+      });
+      emptyRow.font = { italic: true, color: { argb: 'FF666666' } };
+    } else {
+      // Add data rows
+      feedback.forEach(item => {
+        worksheet.addRow({
+          id: item.id,
+          customer_name: item.customer_name,
+          customer_email: item.customer_email,
+          customer_phone: item.customer_phone || 'N/A',
+          subject: item.subject,
+          message: item.message,
+          rating: item.rating,
+          status: item.status,
+          created_at: new Date(item.created_at).toLocaleString()
+        });
+      });
 
-      const buffer = await workbook.xlsx.writeBuffer();
+      // Add borders
+      worksheet.eachRow((row, rowNumber) => {
+        row.eachCell(cell => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+      });
 
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename=feedback_empty_${Date.now()}.xlsx`);
-      return res.send(buffer);
+      // Color-code ratings
+      worksheet.getColumn('rating').eachCell((cell, rowNumber) => {
+        if (rowNumber > 1) {
+          const rating = parseInt(cell.value);
+          if (rating === 5) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } };
+            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+          } else if (rating === 4) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+            cell.font = { color: { argb: 'FFFFFFFF' } };
+          } else if (rating <= 2) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEF4444' } };
+            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+          }
+        }
+      });
+
+      // Color-code status
+      worksheet.getColumn('status').eachCell((cell, rowNumber) => {
+        if (rowNumber > 1) {
+          if (cell.value === 'Resolved') {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD4EDDA' } };
+            cell.font = { color: { argb: 'FF155724' } };
+          } else if (cell.value === 'Pending') {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3CD' } };
+            cell.font = { color: { argb: 'FF856404' } };
+          }
+        }
+      });
     }
 
-    // Use the excelExport module to generate the file
-    const { generateFeedbackExcel } = require('../excelExport');
-    const buffer = await generateFeedbackExcel(feedback);
-
-    console.log('Feedback export file generated successfully');
+    const buffer = await workbook.xlsx.writeBuffer();
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename=feedback_${Date.now()}.xlsx`);
     res.send(buffer);
 
+    console.log('Feedback export completed successfully');
+
   } catch (error) {
     console.error('Error exporting feedback:', error);
-    console.error('Error stack:', error.stack);
-    
     res.status(500).json({ 
       error: 'Failed to export feedback',
-      message: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

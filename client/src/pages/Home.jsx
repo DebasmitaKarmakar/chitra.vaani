@@ -1,115 +1,126 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import axios from 'axios'
-import ArtworkCard from '../components/ArtworkCard'
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://chitravaani-api.vercel.app/api'
 
 function Home() {
-  const [featuredArtworks, setFeaturedArtworks] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchFeaturedArtworks()
-  }, [])
-
-  const fetchFeaturedArtworks = async () => {
-    try {
-      console.log(' Fetching featured artworks from:', `${API_URL}/artworks`)
-      const response = await axios.get(`${API_URL}/artworks`)
-      console.log(' Featured artworks loaded:', response.data)
-      // Get latest 3 artworks
-      setFeaturedArtworks(response.data.slice(0, 3))
-    } catch (error) {
-      console.error(' Error fetching featured artworks:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
-    <div className="fade-in">
+    <div className="container fade-in">
       <div className="hero">
         <h1>Welcome to Chitra Vaani</h1>
-        <p>Where every color tells a story. Browse beautiful artworks, order custom pieces, or collaborate on bulk projects.</p>
+        <p>Handcrafted Art & Custom Creations</p>
       </div>
 
-      <div className="container">
-        {/* Featured Artworks */}
-        <section style={{ marginBottom: '5rem' }}>
-          <h2 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '2rem', color: '#1a1a1a' }}>
-             Featured Artworks
-          </h2>
+      <div className="info-section">
+        <h2>About the Artist</h2>
+        <p style={{ lineHeight: '1.8', fontSize: '1.1rem' }}>
+          Welcome to my art studio. I create unique artworks ranging from paintings and sketches 
+          to handmade crafts like bookmarks, handbands, and clay work. Each piece is carefully 
+          crafted with attention to detail and quality.
+        </p>
+        <p style={{ lineHeight: '1.8', fontSize: '1.1rem', marginTop: '1rem' }}>
+          Whether you're looking for a ready-made piece from my gallery or want something custom-designed 
+          for you, I'm here to bring your vision to life.
+        </p>
+      </div>
+
+      <div className="info-section">
+        <h2>What I Offer</h2>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
           
-          {loading ? (
-            <div className="loading">Loading artworks...</div>
-          ) : featuredArtworks.length > 0 ? (
-            <>
-              <div className="gallery-grid">
-                {featuredArtworks.map(artwork => (
-                  <ArtworkCard key={artwork.id} artwork={artwork} />
-                ))}
-              </div>
-              <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-                <Link to="/gallery" className="btn">View Full Gallery</Link>
-              </div>
-            </>
-          ) : (
-            <p style={{ textAlign: 'center', color: '#666' }}>No artworks available yet.</p>
-          )}
-        </section>
-
-        {/* Services */}
-        <section>
-          <h2 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '2rem', color: '#1a1a1a' }}>
-             Our Services
-          </h2>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
-            <div className="info-section">
-              <h3> Custom Orders</h3>
-              <p>Have a unique vision? Let's bring it to life with personalized artwork tailored just for you.</p>
-              <Link to="/custom-order" className="btn">Order Custom Art</Link>
-            </div>
-
-            <div className="info-section">
-              <h3> Bulk Orders</h3>
-              <p>Perfect for colleges, institutions, events. Get special pricing for multiple pieces.</p>
-              <Link to="/bulk-order" className="btn">Request Bulk Quote</Link>
-            </div>
-
-            <div className="info-section">
-              <h3> Ready Artworks</h3>
-              <p>Browse our collection of ready-to-ship artworks. Find the perfect piece for your space.</p>
-              <Link to="/gallery" className="btn">Browse Gallery</Link>
-            </div>
+          <div style={{ 
+            padding: '2rem', 
+            background: '#f9f7f5', 
+            borderRadius: '8px',
+            border: '1px solid #e8ddd0'
+          }}>
+            <h3 style={{ color: '#8b7355', marginBottom: '1rem' }}>Gallery Artworks</h3>
+            <p style={{ lineHeight: '1.6', color: '#555' }}>
+              Browse my collection of ready-to-purchase artworks including paintings, 
+              bookmarks, badges, handbands, and clay work.
+            </p>
+            <Link to="/gallery" className="btn" style={{ marginTop: '1.5rem', display: 'inline-block', textDecoration: 'none' }}>
+              View Gallery
+            </Link>
           </div>
-        </section>
 
-        {/* Why Choose Us */}
-        <section style={{ marginTop: '4rem' }}>
-          <div className="info-section" style={{ background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)', border: '2px solid #ff9800' }}>
-            <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Why Choose Chitra Vaani?</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
-              <div>
-                <h3> Handcrafted Quality</h3>
-                <p>Every piece is carefully crafted with attention to detail and artistic excellence.</p>
-              </div>
-              <div>
-                <h3> Fair Pricing</h3>
-                <p>Transparent pricing with special discounts for bulk orders and institutions.</p>
-              </div>
-              <div>
-                <h3> Safe Delivery</h3>
-                <p>Secure packaging and reliable shipping to ensure your artwork arrives safely.</p>
-              </div>
-              <div>
-                <h3> Custom Solutions</h3>
-                <p>Work directly with the artist to create something uniquely yours.</p>
-              </div>
-            </div>
+          <div style={{ 
+            padding: '2rem', 
+            background: '#f9f7f5', 
+            borderRadius: '8px',
+            border: '1px solid #e8ddd0'
+          }}>
+            <h3 style={{ color: '#8b7355', marginBottom: '1rem' }}>Custom & Bulk Orders</h3>
+            <p style={{ lineHeight: '1.6', color: '#555' }}>
+              Have a specific idea or vision? I can create personalized artwork tailored 
+              to your preferences and requirements.
+            </p>
+            <Link to="/Order" className="btn" style={{ marginTop: '1.5rem', display: 'inline-block', textDecoration: 'none' }}>
+              Request Custom Art
+            </Link>
           </div>
-        </section>
+        </div>
+      </div>
+
+      <div className="info-section" style={{ background: '#f0f0f0', padding: '2rem', borderRadius: '8px' }}>
+        <h2>Categories Available</h2>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+          gap: '1rem', 
+          marginTop: '1.5rem' 
+        }}>
+          <div style={{ padding: '1rem', background: 'white', borderRadius: '6px', textAlign: 'center' }}>
+            <strong>Paintings</strong>
+          </div>
+          <div style={{ padding: '1rem', background: 'white', borderRadius: '6px', textAlign: 'center' }}>
+            <strong>Bookmarks</strong>
+          </div>
+          <div style={{ padding: '1rem', background: 'white', borderRadius: '6px', textAlign: 'center' }}>
+            <strong>Handbands</strong>
+          </div>
+          <div style={{ padding: '1rem', background: 'white', borderRadius: '6px', textAlign: 'center' }}>
+            <strong>Origami</strong>
+          </div>
+          <div style={{ padding: '1rem', background: 'white', borderRadius: '6px', textAlign: 'center' }}>
+            <strong>Clay Work</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="info-section">
+        <h2>How to Order</h2>
+        <div style={{ marginTop: '1.5rem' }}>
+          <div style={{ marginBottom: '1.5rem', paddingLeft: '1.5rem', borderLeft: '3px solid #8b7355' }}>
+            <h4 style={{ color: '#8b7355', marginBottom: '0.5rem' }}>Step 1: Choose Your Option</h4>
+            <p style={{ color: '#666' }}>Browse the gallery for ready-made items or request a custom piece</p>
+          </div>
+          <div style={{ marginBottom: '1.5rem', paddingLeft: '1.5rem', borderLeft: '3px solid #8b7355' }}>
+            <h4 style={{ color: '#8b7355', marginBottom: '0.5rem' }}>Step 2: Place Your Order</h4>
+            <p style={{ color: '#666' }}>Fill out the order form with your details and preferences</p>
+          </div>
+          <div style={{ marginBottom: '1.5rem', paddingLeft: '1.5rem', borderLeft: '3px solid #8b7355' }}>
+            <h4 style={{ color: '#8b7355', marginBottom: '0.5rem' }}>Step 3: Confirmation</h4>
+            <p style={{ color: '#666' }}>I'll contact you to confirm details and discuss payment</p>
+          </div>
+          <div style={{ paddingLeft: '1.5rem', borderLeft: '3px solid #8b7355' }}>
+            <h4 style={{ color: '#8b7355', marginBottom: '0.5rem' }}>Step 4: Delivery</h4>
+            <p style={{ color: '#666' }}>Your artwork will be carefully packaged and delivered</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="info-section" style={{ textAlign: 'center', background: '#f9f7f5', padding: '2rem', borderRadius: '8px' }}>
+        <h2>Get Started</h2>
+        <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: '#555' }}>
+          Ready to find your perfect artwork or create something unique?
+        </p>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link to="/gallery" className="btn" style={{ textDecoration: 'none' }}>
+            Browse Gallery
+          </Link>
+          <Link to="/contact" className="btn btn-secondary" style={{ textDecoration: 'none' }}>
+            Contact Me
+          </Link>
+        </div>
       </div>
     </div>
   )

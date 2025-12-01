@@ -51,16 +51,6 @@ CREATE TABLE IF NOT EXISTS admin (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Feedback Table
--- Run this in your MySQL database first
--- This creates the feedback table
-
-USE defaultdb;
-
--- Drop existing table if you want to start fresh (CAREFUL!)
--- DROP TABLE IF EXISTS feedback;
-
--- Create feedback table
 CREATE TABLE IF NOT EXISTS feedback (
   id INT PRIMARY KEY AUTO_INCREMENT,
   customer_name VARCHAR(255) NOT NULL,
