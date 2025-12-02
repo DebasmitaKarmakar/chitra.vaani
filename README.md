@@ -204,6 +204,7 @@ chitravaani/
 - MySQL 8.0 or higher
 - npm or yarn package manager
 - Cloudinary account (for image hosting)
+- Aiven Database server for hosting cloud database service
 - Git
 
 ### Local Development Setup
@@ -211,7 +212,7 @@ chitravaani/
 #### 1. Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/chitravaani.git
+git clone https://github.com/DebasmitaKarmakar/chitravaani.git
 cd chitravaani
 ```
 
@@ -695,5 +696,6 @@ node security-check.js
 **Maintained:** Yes
 
 ---
+
 
 **Built with passion for artists and art enthusiasts | ChitraVaani © 2025**
