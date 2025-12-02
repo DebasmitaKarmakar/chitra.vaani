@@ -19,8 +19,6 @@ A complete full-stack web application for showcasing and selling handmade artwor
 - [Deployment](#deployment)
 - [Security](#security)
 - [Future Enhancements](#future-enhancements)
-- [Contributing](#contributing)
-- [License](#license)
 
 ---
 
@@ -660,16 +658,6 @@ node security-check.js
 
 ---
 
-## Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ### Code Standards
 - Follow ESLint configuration
 - Write meaningful commit messages
@@ -677,11 +665,6 @@ Contributions are welcome! Please follow these guidelines:
 - Update documentation for API changes
 - Test all features before submitting
 
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
