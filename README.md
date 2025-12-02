@@ -1,342 +1,716 @@
-#  ChitraVaani – Handmade Art E-Commerce Platform
+# ChitraVaani - Handmade Art E-Commerce Platform
 
-**ChitraVaani** is a complete online marketplace where artists can showcase and sell their handmade artwork, and customers can discover and purchase unique, one-of-a-kind pieces. Think of it as an Etsy for handmade art, built from scratch!
+A complete full-stack web application for showcasing and selling handmade artwork, featuring a customer-facing gallery and a secure admin dashboard for inventory management.
 
----
-
-##  Live Website
-
-**Visit:** [https://chitravaani.vercel.app](https://chitravaani.vercel.app)
-
-The website is fully functional and live. You can browse artworks, place orders, and experience the complete shopping journey!
+**Live Website:** [https://chitravaani.vercel.app](https://chitravaani.vercel.app)
 
 ---
 
-##  What is ChitraVaani?
+## Table of Contents
 
-ChitraVaani (meaning "Voice of Art" in Sanskrit) is a platform that bridges the gap between artists and art lovers. It's designed to make selling and buying handmade art simple, beautiful, and secure.
-
-### For Customers:
-- **Browse** stunning handmade artworks
-- **Filter** by categories (Sketches, Digital Art, Crafts, Paintings, etc.)
-- **View** detailed information about each piece
-- **Order** securely with contact details
-- **Connect** with the artist directly via WhatsApp or email
-
-### For Artists (Admin):
-- **Add** new artworks with images, prices, and descriptions
-- **Manage** inventory and availability
-- **Organize** artworks into categories
-- **Track** orders and update their status
-- **Control** everything from a secure admin dashboard
+- [Overview](#overview)
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Database Schema](#database-schema)
+- [API Documentation](#api-documentation)
+- [Deployment](#deployment)
+- [Security](#security)
+- [Future Enhancements](#future-enhancements)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-##  Key Features
+## Overview
 
-###  Customer Experience
-- **Beautiful Gallery:** Clean, modern interface showcasing artworks
-- **Smart Filtering:** Find exactly what you're looking for by category
-- **Detailed Views:** High-quality images and complete artwork information
-- **Easy Ordering:** Simple form to place orders with your details
-- **Direct Communication:** WhatsApp and email integration for quick artist contact
-- **Mobile Friendly:** Works perfectly on phones, tablets, and desktops
+ChitraVaani (Sanskrit: "Voice of Art") is an online marketplace connecting artists with art enthusiasts. The platform enables artists to showcase their handmade creations while providing customers with an intuitive browsing and purchasing experience.
 
-###  Admin Dashboard
-- **Secure Login:** Password-protected access with encrypted credentials
-- **Artwork Management:** Add, edit, or delete artworks with ease
-- **Category Control:** Create and manage artwork categories
-- **Order Management:** View all orders and update their status
-- **Image Uploads:** Direct image hosting integration
-- **Real-time Updates:** Changes reflect immediately on the website
+### Key Capabilities
 
-###  Security Features
-- **Encrypted Passwords:** Admin passwords are hashed using industry-standard bcrypt
-- **Protected Routes:** Only authorized admins can access the dashboard
-- **Secure Database:** All data stored safely in MySQL
-- **Environment Protection:** Sensitive information kept private
-- **Safe Queries:** Protection against SQL injection attacks
+**For Customers:**
+- Browse curated artwork collections
+- Filter by categories (Paintings, Bookmarks, Handbands, Badges, Clay Work)
+- View detailed artwork information with high-quality images
+- Place orders through multiple channels (Database, WhatsApp)
+- Submit feedback and ratings
+- Direct artist communication via WhatsApp/Email
+
+**For Artists (Admin):**
+- Secure admin dashboard with authentication
+- Complete artwork lifecycle management (Create, Read, Update, Delete)
+- Category organization and management
+- Order tracking and status updates
+- Customer feedback monitoring
+- Data export functionality (Excel format)
 
 ---
 
-##  Technology Stack
+## Features
 
-### Frontend (What You See)
-- **React** - Modern JavaScript framework for building the interface
-- **Vite** - Lightning-fast build tool
-- **Tailwind CSS** - For beautiful, responsive styling
-- **Axios** - For communicating with the backend
+### Customer Interface
+- **Responsive Gallery** - Mobile-first design with grid layout
+- **Advanced Filtering** - Category-based artwork filtering
+- **Detailed Views** - Multiple image carousel with zoom capability
+- **Dual Ordering System** - Database orders + instant WhatsApp integration
+- **Feedback System** - Star ratings with detailed feedback forms
+- **Direct Communication** - Integrated WhatsApp and email contact
 
-### Backend (Behind the Scenes)
-- **Node.js** - JavaScript runtime for the server
-- **Express** - Web framework for building APIs
-- **MySQL** - Database for storing all information
-- **bcrypt** - For password encryption
+### Admin Dashboard
+- **Authentication System** - Secure login with JWT tokens and Google OAuth
+- **Artwork Management** - CRUD operations with image upload to Cloudinary
+- **Category Control** - Dynamic category creation and management
+- **Order Management** - Real-time order tracking with status updates
+- **Feedback Dashboard** - Customer feedback overview with statistics
+- **Data Export** - Excel export for orders, artworks, and feedback
+- **Real-time Stats** - Dashboard metrics with auto-refresh capability
 
-### Cloud & Deployment
-- **Vercel** - Hosting platform (both frontend and backend)
-- **Cloudinary** - Image storage and optimization
-- **MySQL Database** - Secure cloud database
+### Security Features
+- Password hashing using bcrypt (10 salt rounds)
+- JWT-based authentication with 7-day expiration
+- Protected API routes with middleware verification
+- SQL injection prevention through parameterized queries
+- CORS protection with whitelist configuration
+- Rate limiting on authentication endpoints
+- Environment variable protection
 
 ---
 
-##  How It Works
+## Technology Stack
 
-### The Simple Flow:
-
-1. **Customer visits website** → Sees beautiful artwork gallery
-2. **Customer clicks on artwork** → Views full details
-3. **Customer places order** → Fills out order form
-4. **Order saved to database** → Artist receives notification
-5. **Artist manages via dashboard** → Updates order status
-6. **Customer contacted** → Order fulfilled!
-
-### The Technical Flow:
-
+### Frontend
 ```
-Customer Browser
-       ↓
-Frontend (React App)
-       ↓
-API Requests (Axios)
-       ↓
-Backend (Express Server)
-       ↓
-Database (MySQL)
+React 18.3.1          - UI framework
+Vite 5.3.0            - Build tool and dev server
+React Router 6.28.0   - Client-side routing
+Axios 1.7.2           - HTTP client
+Google OAuth 0.12.2   - Google authentication
 ```
 
+### Backend
+```
+Node.js 22.x          - Runtime environment
+Express 4.21.2        - Web framework
+MySQL2 3.15.3         - Database driver
+bcryptjs 2.4.3        - Password hashing
+jsonwebtoken 9.0.2    - JWT authentication
+Multer 1.4.5          - File upload handling
+Cloudinary 1.41.3     - Image hosting
+ExcelJS 4.4.0         - Excel generation
+Joi 18.0.2            - Input validation
+Helmet 8.1.0          - Security headers
+Express Rate Limit    - DDoS protection
+```
+
+### Cloud Services
+```
+Vercel                - Frontend & Backend hosting
+Cloudinary            - Image CDN and storage
+MySQL (Aiven)         - Cloud database with SSL
+```
+
 ---
 
-##  Project Structure
+## Architecture
+
+### System Design
 
 ```
-ChitraVaani/
-├── client/                  # Frontend React application
+┌─────────────────┐
+│  Client Browser │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  React Frontend │ (Vercel)
+│   Port: 5173    │
+└────────┬────────┘
+         │
+         ▼ HTTP/HTTPS
+┌─────────────────┐
+│  Express API    │ (Vercel Serverless)
+│   Port: 5000    │
+└────────┬────────┘
+         │
+         ├─────────► Cloudinary (Images)
+         │
+         └─────────► MySQL Database (Aiven)
+```
+
+### Directory Structure
+
+```
+chitravaani/
+├── client/                      # Frontend application
+│   ├── public/
+│   │   ├── favicon.ico
+│   │   └── payment-qr.jpg
 │   ├── src/
-│   │   ├── components/      # Reusable UI components
-│   │   ├── pages/          # Different pages (Home, Admin, etc.)
-│   │   ├── services/       # API communication logic
-│   │   └── App.jsx         # Main application component
-│   └── package.json        # Frontend dependencies
+│   │   ├── assets/
+│   │   │   └── styles.css       # Global styles
+│   │   ├── components/
+│   │   │   ├── ArtworkCard.jsx  # Gallery card component
+│   │   │   ├── Footer.jsx
+│   │   │   └── Header.jsx
+│   │   ├── pages/
+│   │   │   ├── Admin.jsx        # Admin dashboard
+│   │   │   ├── Artwork.jsx      # Single artwork view
+│   │   │   ├── BulkOrder.jsx    # Bulk order form
+│   │   │   ├── Contact.jsx      # Contact & feedback
+│   │   │   ├── CustomOrder.jsx  # Custom order form
+│   │   │   ├── Gallery.jsx      # Main gallery
+│   │   │   └── Home.jsx         # Landing page
+│   │   ├── App.jsx              # Main app component
+│   │   ├── main.jsx             # Entry point
+│   │   └── index.html
+│   ├── .env                     # Environment variables
+│   ├── package.json
+│   ├── vite.config.js
+│   └── vercel.json              # Vercel config
 │
-├── server/                  # Backend Node.js application
-│   ├── routes/             # API endpoints
-│   ├── config/             # Database configuration
-│   ├── middleware/         # Security and authentication
-│   └── server.js           # Main server file
+├── server/                      # Backend application
+│   ├── middleware/
+│   │   ├── auth.js              # JWT verification
+│   │   └── validation.js        # Input validation schemas
+│   ├── routes/
+│   │   ├── admin.js             # Admin auth & dashboard
+│   │   ├── artworks.js          # Artwork CRUD
+│   │   ├── categories.js        # Category management
+│   │   ├── feedback.js          # Customer feedback
+│   │   └── orders.js            # Order management
+│   ├── change-password.js       # Password update utility
+│   ├── cloudinary.js            # Image upload config
+│   ├── db.js                    # Database connection
+│   ├── excelExport.js           # Excel generation logic
+│   ├── security-check.js        # Security audit script
+│   ├── server.js                # Express server
+│   ├── setup-admin.js           # Admin creation script
+│   ├── .env                     # Environment variables
+│   ├── package.json
+│   └── vercel.json              # Vercel config
 │
-├── database_setup.sql       # Database structure
-└── README.md               # This file!
+├── database_setup.sql           # Database schema
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-##  Database Structure
-
-The application uses four main tables:
-
-### 1. **Admin Table**
-Stores admin login credentials (password is encrypted)
-
-### 2. **Categories Table**
-Different types of art (Sketches, Paintings, Digital Art, etc.)
-
-### 3. **Artworks Table**
-All the details about each artwork:
-- Title, description, price
-- Images
-- Availability status
-- Which category it belongs to
-
-### 4. **Orders Table**
-Customer orders with:
-- Customer name, email, phone
-- Artwork details
-- Order status (Pending, Completed, Cancelled)
-- Order date
-
----
-
-##  Running Locally
-
-Want to run this on your own computer? Here's how:
+## Installation
 
 ### Prerequisites
-- Node.js installed on your computer
-- MySQL database
-- A code editor (like VS Code)
 
-### Steps:
+- Node.js 18.x or higher
+- MySQL 8.0 or higher
+- npm or yarn package manager
+- Cloudinary account (for image hosting)
+- Git
 
-#### 1. **Clone the Repository**
+### Local Development Setup
+
+#### 1. Clone Repository
+
 ```bash
 git clone https://github.com/yourusername/chitravaani.git
 cd chitravaani
 ```
 
-#### 2. **Set Up Backend**
+#### 2. Database Setup
+
+```bash
+# Connect to MySQL
+mysql -u root -p
+
+# Create database
+CREATE DATABASE chitravaani;
+USE chitravaani;
+
+# Import schema
+SOURCE database_setup.sql;
+
+# Verify tables
+SHOW TABLES;
+```
+
+#### 3. Backend Setup
+
 ```bash
 cd server
 npm install
-```
 
-Create a `.env` file in the server folder with your database details:
-```
-DB_HOST=your-database-host
-DB_USER=your-database-username
-DB_PASSWORD=your-database-password
-DB_NAME=chitravaani
-```
+# Create .env file (see Configuration section)
+touch .env
 
-Start the server:
-```bash
+# Initialize admin user
+node setup-admin.js
+
+# Start server
 npm start
 ```
 
-#### 3. **Set Up Frontend**
-Open a new terminal:
+Server will run at `http://localhost:5000`
+
+#### 4. Frontend Setup
+
 ```bash
 cd client
 npm install
-```
 
-Create a `.env` file in the client folder:
-```
-VITE_API_URL=http://localhost:5000/api
-```
+# Create .env file
+touch .env
 
-Start the frontend:
-```bash
+# Start development server
 npm run dev
 ```
 
-#### 4. **Visit the Website**
-Open your browser and go to: `http://localhost:5173`
+Frontend will run at `http://localhost:5173`
 
 ---
 
-##  Deployment
+## Configuration
 
-The website is deployed on **Vercel**, a modern cloud platform:
+### Server Environment Variables
 
-### Frontend Deployment
-- Automatically builds from the `client` folder
-- Every code push triggers a new deployment
-- Live at: https://chitravaani.vercel.app
+Create `server/.env`:
 
-### Backend Deployment
-- Runs as serverless functions
-- Automatically scales based on traffic
-- All API routes available at `/api/...`
-
-### Database
-- Hosted on a cloud MySQL provider
-- Secure connection with encrypted credentials
-- Automatic backups enabled
-
----
-
-##  Security Measures
-
-1. **Password Encryption:** All admin passwords are hashed using bcrypt
-2. **Environment Variables:** Sensitive data never committed to code
-3. **SQL Injection Protection:** All database queries are sanitized
-4. **CORS Configuration:** Only allowed origins can access the API
-5. **Route Protection:** Admin routes require authentication
-
----
-
-##  Future Enhancements
-
-Planned features for future versions:
-
--  **Payment Integration:** Razorpay/Stripe for online payments
--  **Shopping Cart:** Add multiple items before checkout
--  **Reviews & Ratings:** Customer feedback on artworks
--  **Email Notifications:** Automatic order confirmations
--  **Analytics Dashboard:** Sales insights and statistics
--  **Advanced Search:** Search by price, date, popularity
--  **User Accounts:** Save addresses and order history
--  **Artist Profiles:** Multiple artists on one platform
-
----
-
-##  Contact & Support
-
-- **Website:** [chitravaani.vercel.app](https://chitravaani.vercel.app)
-- **Email:** Available on website
-- **WhatsApp:** Direct messaging from website
-
----
-
-##  License
-
-This project is built for educational and commercial purposes. All artwork displayed belongs to their respective creators.
-
----
-
-##  Acknowledgments
-
-Built with for artists and art lovers. ChitraVaani represents the perfect blend of technology and creativity, making handmade art accessible to everyone.
-
----
-
-##  For Developers
-
-### API Endpoints
-
-**Public Routes:**
-- `GET /api/artworks` - Get all artworks
-- `GET /api/artworks/:id` - Get single artwork
-- `GET /api/categories` - Get all categories
-- `POST /api/orders` - Place an order
-
-**Protected Routes (Require Admin Auth):**
-- `POST /api/admin/login` - Admin login
-- `POST /api/artworks` - Add new artwork
-- `PUT /api/artworks/:id` - Update artwork
-- `DELETE /api/artworks/:id` - Delete artwork
-- `GET /api/orders` - Get all orders
-- `PUT /api/orders/:id` - Update order status
-
-### Environment Variables Required
-
-**Server (.env):**
-```
+```env
+# Server
 PORT=5000
-DB_HOST=your-host
-DB_USER=your-user
-DB_PASSWORD=your-password
-DB_NAME=chitravaani
+NODE_ENV=development
+
+# Database (Aiven Cloud MySQL)
+DB_HOST=your-mysql-host.aivencloud.com
+DB_USER=avnadmin
+DB_PASSWORD=your-secure-password
+DB_NAME=defaultdb
+DB_PORT=3306
+
+# Authentication
+JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+ADMIN_USERNAME=your-admin-username
+ADMIN_PASSWORD=your-secure-password
+
+# Google OAuth (optional)
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+
+# Cloudinary Image Storage
 CLOUD_NAME=your-cloudinary-name
-CLOUD_API_KEY=your-key
-CLOUD_API_SECRET=your-secret
-JWT_SECRET=your-jwt-secret
-CLIENT_URL=https://your-frontend-url.com
+CLOUD_API_KEY=your-api-key
+CLOUD_API_SECRET=your-api-secret
+
+# CORS
+CLIENT_URL=http://localhost:5173
 ```
 
-**Client (.env):**
-```
-VITE_API_URL=https://your-backend-url.com/api
-VITE_WHATSAPP_NUMBER=your-number
-VITE_ARTIST_EMAIL=your-email
+### Client Environment Variables
+
+Create `client/.env`:
+
+```env
+# API Configuration
+VITE_API_URL=http://localhost:5000/api
+
+# Contact Information
+VITE_WHATSAPP_NUMBER=919436357001
+VITE_ARTIST_EMAIL=artist@example.com
+VITE_INSTAGRAM=@your.handle
+
+# Google OAuth (optional)
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 ```
 
 ---
 
-##  Learning Resources
+## Database Schema
 
-This project demonstrates:
-- Full-stack development (Frontend + Backend + Database)
-- RESTful API design
-- Authentication and authorization
-- Cloud deployment
-- Modern React patterns
-- Database design and relationships
-- Security best practices
+### Tables Overview
 
-Perfect for understanding how real-world e-commerce applications work!
+#### 1. admin
+```sql
+id              INT PRIMARY KEY AUTO_INCREMENT
+username        VARCHAR(50) UNIQUE NOT NULL
+password_hash   VARCHAR(255) NOT NULL
+created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+```
+
+#### 2. categories
+```sql
+id              INT PRIMARY KEY AUTO_INCREMENT
+name            VARCHAR(100) UNIQUE NOT NULL
+created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+```
+
+#### 3. artworks
+```sql
+id              INT PRIMARY KEY AUTO_INCREMENT
+title           VARCHAR(255) NOT NULL
+description     TEXT
+category_id     INT (FK → categories.id)
+medium          VARCHAR(100)
+dimensions      VARCHAR(100)
+year            VARCHAR(10)
+price           VARCHAR(50) NOT NULL
+photos          JSON NOT NULL
+created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+```
+
+#### 4. orders
+```sql
+id                 INT PRIMARY KEY AUTO_INCREMENT
+order_type         ENUM('regular', 'custom', 'bulk')
+artwork_id         INT (FK → artworks.id)
+customer_name      VARCHAR(255) NOT NULL
+customer_email     VARCHAR(255) NOT NULL
+customer_phone     VARCHAR(20) NOT NULL
+delivery_address   TEXT
+order_details      JSON NOT NULL
+status             ENUM('Pending', 'Completed', 'Cancelled')
+created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+updated_at         TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+```
+
+#### 5. feedback
+```sql
+id                 INT PRIMARY KEY AUTO_INCREMENT
+customer_name      VARCHAR(255) NOT NULL
+customer_email     VARCHAR(255) NOT NULL
+customer_phone     VARCHAR(20)
+subject            VARCHAR(200) NOT NULL
+message            TEXT NOT NULL
+rating             INT (1-5) NOT NULL
+status             VARCHAR(20) DEFAULT 'Pending'
+created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+updated_at         TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+```
 
 ---
 
-**Made by DEBASMITA | ChitraVaani © 2025**
+## API Documentation
+
+### Base URL
+- **Development:** `http://localhost:5000/api`
+- **Production:** `https://chitravaani-api.vercel.app/api`
+
+### Public Endpoints
+
+#### Artworks
+```
+GET    /artworks              - Get all artworks
+GET    /artworks/:id          - Get single artwork
+```
+
+#### Categories
+```
+GET    /categories            - Get all categories
+```
+
+#### Orders
+```
+POST   /orders                - Create new order
+```
+
+#### Feedback
+```
+POST   /feedback              - Submit feedback
+```
+
+### Protected Endpoints (Require JWT)
+
+#### Authentication
+```
+POST   /admin/login           - Admin login
+POST   /admin/google-login    - Google OAuth login
+GET    /admin/verify          - Verify JWT token
+POST   /admin/change-password - Update password
+```
+
+#### Admin Dashboard
+```
+GET    /admin/dashboard/stats - Get dashboard statistics
+```
+
+#### Artwork Management
+```
+POST   /artworks              - Create artwork (with image upload)
+DELETE /artworks/:id          - Delete artwork
+```
+
+#### Category Management
+```
+POST   /categories            - Create category
+DELETE /categories/:id        - Delete category
+```
+
+#### Order Management
+```
+GET    /orders                - Get all orders
+GET    /orders/:id            - Get single order
+PATCH  /orders/:id/status     - Update order status
+DELETE /orders/:id            - Delete order
+GET    /orders/stats/summary  - Get order statistics
+```
+
+#### Feedback Management
+```
+GET    /feedback              - Get all feedback
+GET    /feedback/:id          - Get single feedback
+PATCH  /feedback/:id/status   - Update feedback status
+DELETE /feedback/:id          - Delete feedback
+GET    /feedback/stats/summary - Get feedback statistics
+```
+
+#### Data Export
+```
+GET    /admin/export/orders   - Export orders as Excel
+GET    /admin/export/artworks - Export artworks as Excel
+GET    /admin/export/feedback - Export feedback as Excel
+```
+
+### Request/Response Examples
+
+#### Create Order
+```http
+POST /api/orders
+Content-Type: application/json
+
+{
+  "order_type": "regular",
+  "artwork_id": 5,
+  "customer_name": "John Doe",
+  "customer_email": "john@example.com",
+  "customer_phone": "9876543210",
+  "delivery_address": "123 Main St, City, State 12345",
+  "order_details": {
+    "size": "medium",
+    "notes": "Please frame it"
+  }
+}
+```
+
+Response:
+```json
+{
+  "message": "Order created successfully",
+  "orderId": 42
+}
+```
+
+#### Admin Login
+```http
+POST /api/admin/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "secure_password"
+}
+```
+
+Response:
+```json
+{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "admin": {
+    "id": 1,
+    "username": "admin",
+    "role": "admin"
+  }
+}
+```
+
+---
+
+## Deployment
+
+### Vercel Deployment
+
+#### Frontend Deployment
+
+1. **Connect Repository to Vercel**
+   - Import project from GitHub
+   - Select `client` directory as root
+   - Framework preset: Vite
+
+2. **Configure Build Settings**
+   ```
+   Build Command: npm run build
+   Output Directory: dist
+   Install Command: npm install
+   ```
+
+3. **Add Environment Variables**
+   - Go to Project Settings → Environment Variables
+   - Add all variables from `client/.env`
+
+#### Backend Deployment
+
+1. **Configure Vercel Settings**
+   - Select `server` directory as root
+   - Add `vercel.json`:
+
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "server.js"
+    }
+  ]
+}
+```
+
+2. **Add Environment Variables**
+   - Add all variables from `server/.env`
+   - Ensure `CLIENT_URL` points to frontend URL
+
+3. **Deploy**
+   ```bash
+   vercel --prod
+   ```
+
+### Database Migration
+
+For production database:
+
+1. **Export Local Data**
+   ```bash
+   mysqldump -u root -p chitravaani > backup.sql
+   ```
+
+2. **Import to Cloud Database**
+   ```bash
+   mysql -h your-host -u user -p defaultdb < backup.sql
+   ```
+
+---
+
+## Security
+
+### Implemented Security Measures
+
+1. **Authentication & Authorization**
+   - JWT tokens with 7-day expiration
+   - bcrypt password hashing (10 rounds)
+   - Protected admin routes with middleware
+   - Google OAuth integration
+
+2. **Input Validation**
+   - Joi schema validation on all inputs
+   - SQL injection prevention via parameterized queries
+   - XSS protection through input sanitization
+   - File upload restrictions (images only, 10MB limit)
+
+3. **Network Security**
+   - CORS whitelist configuration
+   - Rate limiting (15min window, 100 requests)
+   - Helmet.js security headers
+   - HTTPS enforcement in production
+
+4. **Data Protection**
+   - Environment variable isolation
+   - Database connection with SSL
+   - Sensitive data never logged
+   - Secure session management
+
+### Security Audit
+
+Run security check:
+```bash
+cd server
+node security-check.js
+```
+
+---
+
+## Future Enhancements
+
+### Phase 1 (Q1 2025)
+- Payment gateway integration (Razorpay/Stripe)
+- Shopping cart functionality
+- Email notification system
+- Order invoice generation
+
+### Phase 2 (Q2 2025)
+- Customer accounts with order history
+- Advanced search and filtering
+- Wishlist functionality
+- Review and rating system for artworks
+
+### Phase 3 (Q3 2025)
+- Multi-vendor support
+- Artist profile pages
+- Analytics dashboard
+- Mobile app (React Native)
+
+### Phase 4 (Q4 2025)
+- AI-powered artwork recommendations
+- Augmented reality preview
+- Social media integration
+- Affiliate program
+
+---
+
+## Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### Code Standards
+- Follow ESLint configuration
+- Write meaningful commit messages
+- Add comments for complex logic
+- Update documentation for API changes
+- Test all features before submitting
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
+
+- **Artist:** Debasmita Karmakar
+- **Framework:** React, Express, MySQL
+- **Hosting:** Vercel
+- **Image CDN:** Cloudinary
+- **Icons:** Lucide React
+
+---
+
+## Contact & Support
+
+- **Live Website:** [chitravaani.vercel.app](https://chitravaani.vercel.app)
+- **Email:** debasmitak10@gmail.com
+- **WhatsApp:** +91-9436357001
+- **Instagram:** @chitra.vaani
+
+---
+
+## Project Status
+
+**Status:** Active Development  
+**Version:** 2.0.0  
+**Last Updated:** December 2025  
+**Maintained:** Yes
+
+---
+
+**Built with passion for artists and art enthusiasts | ChitraVaani © 2025**
