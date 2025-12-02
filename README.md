@@ -30,9 +30,9 @@ ChitraVaani (Sanskrit: "Voice of Art") is an online marketplace connecting artis
 
 **For Customers:**
 - Browse curated artwork collections
-- Filter by categories (Paintings, Bookmarks, Handbands, Badges, Clay Work)
+- Filter by categories (Paintings, Bookmarks, Handbands, Origami, Clay Work etc.)
 - View detailed artwork information with high-quality images
-- Place orders through multiple channels (Database, WhatsApp)
+- Place orders through multiple channels WhatsApp for direct communication
 - Submit feedback and ratings
 - Direct artist communication via WhatsApp/Email
 
@@ -212,8 +212,8 @@ chitravaani/
 #### 1. Clone Repository
 
 ```bash
-git clone https://github.com/DebasmitaKarmakar/chitravaani.git
-cd chitravaani
+git clone https://github.com/DebasmitaKarmakar/chitra.vaani.git
+cd chitra.vaani
 ```
 
 #### 2. Database Setup
@@ -284,7 +284,7 @@ DB_HOST=your-mysql-host.aivencloud.com
 DB_USER=avnadmin
 DB_PASSWORD=your-secure-password
 DB_NAME=defaultdb
-DB_PORT=3306
+DB_PORT=given_port_by_aiven
 
 # Authentication
 JWT_SECRET=your-super-secret-jwt-key-min-32-chars
@@ -312,7 +312,7 @@ Create `client/.env`:
 VITE_API_URL=http://localhost:5000/api
 
 # Contact Information
-VITE_WHATSAPP_NUMBER=919436357001
+VITE_WHATSAPP_NUMBER=your_number
 VITE_ARTIST_EMAIL=artist@example.com
 VITE_INSTAGRAM=@your.handle
 
@@ -683,7 +683,6 @@ node security-check.js
 
 - **Live Website:** [chitravaani.vercel.app](https://chitravaani.vercel.app)
 - **Email:** debasmitak10@gmail.com
-- **WhatsApp:** +91-9436357001
 - **Instagram:** @chitra.vaani
 
 ---
@@ -699,3 +698,4 @@ node security-check.js
 
 
 **Built with passion for artists and art enthusiasts | ChitraVaani © 2025**
+
