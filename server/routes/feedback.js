@@ -3,6 +3,7 @@ const router = express.Router();
 const { promisePool } = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
+const { sendFeedbackConfirmation } = require('../emailService');
 
 // Simple token verification
 const verifyToken = (req, res, next) => {
@@ -75,7 +76,14 @@ router.post('/', async (req, res) => {
       ]
     );
 
-    console.log('Feedback inserted, ID:', result.insertId);
+console.log(' Feedback inserted successfully, ID:', result.insertId);
+// Send confirmation email
+    sendFeedbackConfirmation({
+      customerName: customer_name,
+      customerEmail: customer_email,
+      rating: parseInt(rating),
+      subject: subject
+    }).catch(err => console.error('Email error:', err));
 
     res.status(201).json({
       message: 'Feedback submitted successfully',

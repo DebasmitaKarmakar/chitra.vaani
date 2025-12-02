@@ -2,11 +2,16 @@ const express = require('express');
 const router = express.Router();
 const { promisePool } = require('../db');
 const { requireAdmin } = require('../middleware/auth');
+const { 
+  sendOrderConfirmation, 
+  notifyAdminNewOrder,
+  sendOrderStatusUpdate 
+} = require('../emailService');
 
-// PUBLIC: Create new order - RELAXED VALIDATION
+// PUBLIC: Create new order
 router.post('/', async (req, res) => {
   try {
-    console.log(' Order received:', JSON.stringify(req.body, null, 2));
+    console.log(' Order submission received:', req.body);
 
     const {
       order_type,
@@ -17,6 +22,7 @@ router.post('/', async (req, res) => {
       delivery_address,
       order_details
     } = req.body;
+
 
     // Validation
     if (!order_type || !['regular', 'custom', 'bulk'].includes(order_type)) {
@@ -80,34 +86,43 @@ router.post('/', async (req, res) => {
         customer_name.trim(),
         customer_email.trim().toLowerCase(),
         cleanPhone,
-        delivery_address ? delivery_address.trim() : null,
+        delivery_address?.trim() || null,
         JSON.stringify(order_details || {})
       ]
     );
 
-    console.log(' Order created! ID:', result.insertId);
+    console.log(' Order inserted successfully, ID:', result.insertId);
+
+    // Send emails asynchronously (don't wait for them)
+    const orderData = {
+      orderId: result.insertId,
+      customerName: customer_name,
+      customerEmail: customer_email,
+      customerPhone: cleanPhone,
+      orderType: order_type,
+      orderDetails: order_details || {}
+    };
+
+    // Send confirmation to customer
+    sendOrderConfirmation(orderData).catch(err => 
+      console.error('Email error (customer):', err)
+    );
+
+    // Notify admin
+    notifyAdminNewOrder(orderData).catch(err => 
+      console.error('Email error (admin):', err)
+    );
 
     res.status(201).json({
-      success: true,
       message: 'Order created successfully',
       orderId: result.insertId
     });
 
   } catch (error) {
-    console.error(' Order creation error:', error);
-    console.error('Error code:', error.code);
-    console.error('Error message:', error.message);
-    
-    if (error.code === 'ER_NO_SUCH_TABLE') {
-      return res.status(500).json({ 
-        error: 'Database table missing. Run database_setup.sql',
-        code: 'TABLE_NOT_FOUND'
-      });
-    }
-    
+    console.error(' Error creating order:', error);
     res.status(500).json({ 
       error: 'Failed to create order',
-      details: process.env.NODE_ENV === 'development' ? error.message : 'Please try again'
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -194,14 +209,32 @@ router.patch('/:id/status', requireAdmin, async (req, res) => {
       });
     }
 
+    // Get order details first
+    const [orders] = await promisePool.query(
+      'SELECT * FROM orders WHERE id = ?',
+      [req.params.id]
+    );
+
+    if (orders.length === 0) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const order = orders[0];
+
+    // Update status
     const [result] = await promisePool.query(
       'UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?',
       [status, req.params.id]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
+    // Send status update email
+    sendOrderStatusUpdate({
+      orderId: order.id,
+      customerName: order.customer_name,
+      customerEmail: order.customer_email,
+      newStatus: status,
+      orderType: order.order_type
+    }).catch(err => console.error('Email error:', err));
 
     res.json({ message: 'Order status updated successfully' });
 
