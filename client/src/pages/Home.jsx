@@ -8,7 +8,7 @@ function Home() {
         <p>Handcrafted Art & Custom Creations</p>
       </div>
 
-      <div className="info-section">
+    <div className="container fade-in">
         <h2>About the Artist</h2>
         <p style={{ lineHeight: '1.8', fontSize: '1.1rem' }}>
           Welcome to my art studio. I create unique artworks ranging from paintings and sketches 

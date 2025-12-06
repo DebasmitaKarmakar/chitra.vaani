@@ -157,12 +157,11 @@ Email: ${formData.customerEmail}`;
     <div style={{ backgroundColor: '#f7f7f8' }}>
 
       {/*  Purple Gradient Hero Section */}
-      <div className="hero" style={{ padding: '5rem 2rem 4rem' }}>
-
-        <h1 style={{ fontSize: '3rem', fontWeight: '700' }}>Special Orders</h1>
-        <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>
-          Custom artwork or bulk orders for organizations
-        </p>
+      <div className="container fade-in admin-page">
+        <div className="hero" style={{ padding: '3rem 2rem 4rem' }}>
+          <h1>Special Orders</h1>
+          <p>Custom artwork or bulk orders for organizations</p>
+        </div>
       </div>
 
       {/* Main Content Container */}

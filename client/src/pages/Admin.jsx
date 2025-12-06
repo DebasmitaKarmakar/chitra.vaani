@@ -613,7 +613,7 @@ const refreshAllData = async () => {
   if (!isLoggedIn) {
     return (
       <div className="container fade-in admin-page">
-        <div className="hero" style={{ padding: '5rem 2rem 4rem' }}>
+        <div className="hero" style={{ padding: '3rem 2rem 4rem' }}>
           <h1>Admin Login</h1>
           <p>Choose your preferred login method</p>
         </div>
