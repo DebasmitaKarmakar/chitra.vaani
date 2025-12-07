@@ -14,7 +14,8 @@ function Admin() {
   const [error, setError] = useState('')
   const [token, setToken] = useState(null)
   const [activeTab, setActiveTab] = useState('dashboard')
-  
+  const [artistProfileImage, setArtistProfileImage] = useState(null)
+  const [uploadingArtistImage, setUploadingArtistImage] = useState(false)
   const [artworks, setArtworks] = useState([])
   const [categories, setCategories] = useState([])
   const [orders, setOrders] = useState([])
@@ -31,6 +32,23 @@ function Admin() {
   const [feedbackStats, setFeedbackStats] = useState({})
   const [feedbackFilter, setFeedbackFilter] = useState('all')
   
+  const [artists, setArtists] = useState([])
+  const [newArtist, setNewArtist] = useState({
+    name: '',
+    location: '',
+    style: '',
+    bio: '',
+    email: '',
+    phone: '',
+    instagram: '',
+    facebook: '',
+    twitter: '',
+    website: '',
+    profile_image_url: ''
+  })
+  const [editingArtist, setEditingArtist] = useState(null)
+  const [showArtistForm, setShowArtistForm] = useState(false)
+
   const [newArtwork, setNewArtwork] = useState({
     title: '',
     description: '',
@@ -38,13 +56,15 @@ function Admin() {
     medium: '',
     dimensions: '',
     year: '',
-    price: ''
+    price: '',
+    artist_id: ''
   })
   const [selectedFiles, setSelectedFiles] = useState([])
   const [uploading, setUploading] = useState(false)
   const [newCategory, setNewCategory] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
 
+  
   // Auto-refresh dashboard every 30 seconds
 useEffect(() => {
   if (isLoggedIn && token && activeTab === 'dashboard') {
@@ -260,6 +280,13 @@ const loadDashboardData = async (forceRefresh = false) => {
       }
     }
 
+    if (activeTab === 'artists' || forceRefresh) {
+      console.log(' Fetching artists...')
+      const response = await axios.get(`${API_URL}/artists/admin/list`, { headers })
+      console.log(' Artists:', response.data.length)
+      setArtists(response.data)
+    }
+
     console.log(' Dashboard data loaded successfully')
 
   } catch (error) {
@@ -296,6 +323,7 @@ const handleAddArtwork = async (e) => {
     formData.append('dimensions', newArtwork.dimensions)
     formData.append('year', newArtwork.year)
     formData.append('price', newArtwork.price)
+    formData.append('artist_id', newArtwork.artist_id)  
 
     selectedFiles.forEach((file, index) => {
       formData.append('photos', file)
@@ -312,7 +340,7 @@ const handleAddArtwork = async (e) => {
     alert('Artwork added successfully!')
     setNewArtwork({
       title: '', description: '', category: '', medium: '', 
-      dimensions: '', year: '', price: ''
+      dimensions: '', year: '', price: '', artist_id: ''
     })
     setSelectedFiles([])
     document.getElementById('artworkImages').value = ''
@@ -445,6 +473,153 @@ const handleDeleteFeedback = async (feedbackId) => {
   } catch (error) {
     console.error("Error deleting feedback:", error)
     alert("Failed to delete feedback.")
+  }
+}
+
+const handleAddArtist = async (e) => {
+  e.preventDefault()
+  
+  if (!newArtist.name || newArtist.name.trim().length < 2) {
+    alert(' Artist name is required (minimum 2 characters)')
+    return
+  }
+
+  if (newArtist.email && !newArtist.email.includes('@')) {
+    alert(' Please enter a valid email address')
+    return
+  }
+
+  try {
+    setUploadingArtistImage(true)
+    console.log(' Creating new artist...')
+    
+    // Create FormData for file upload
+    const formData = new FormData()
+    formData.append('name', newArtist.name.trim())
+    formData.append('location', newArtist.location?.trim() || '')
+    formData.append('style', newArtist.style?.trim() || '')
+    formData.append('bio', newArtist.bio?.trim() || '')
+    formData.append('email', newArtist.email?.trim().toLowerCase() || '')
+    formData.append('phone', newArtist.phone?.trim() || '')
+    formData.append('instagram', newArtist.instagram?.trim() || '')
+    formData.append('facebook', newArtist.facebook?.trim() || '')
+    formData.append('twitter', newArtist.twitter?.trim() || '')
+    formData.append('website', newArtist.website?.trim() || '')
+    
+    // Add profile image if selected
+    if (artistProfileImage) {
+      formData.append('profileImage', artistProfileImage)
+    }
+    
+await axios.post(
+      `${API_URL}/artists/admin/create`, 
+      formData, 
+      {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    )
+    
+    alert(' Artist added successfully!')
+    
+    // Reset form
+    setNewArtist({
+      name: '', location: '', style: '', bio: '', email: '',
+      phone: '', instagram: '', facebook: '', twitter: '', 
+      website: '', profile_image_url: ''
+    })
+    setArtistProfileImage(null)
+    // Clear file input
+    const fileInput = document.getElementById('artistProfileImage')
+    if (fileInput) fileInput.value = ''
+    
+    setShowArtistForm(false)
+    await loadDashboardData(true)
+    
+  } catch (error) {
+    console.error(' Error:', error)
+    alert('Failed: ' + (error.response?.data?.error || error.message))
+  } finally {
+    setUploadingArtistImage(false)
+  }
+}
+
+const handleUpdateArtist = async (e) => {
+  e.preventDefault()
+  
+  if (!editingArtist.name || editingArtist.name.trim().length < 2) {
+    alert(' Artist name is required')
+    return
+  }
+
+  if (editingArtist.email && !editingArtist.email.includes('@')) {
+    alert(' Please enter a valid email address')
+    return
+  }
+
+  try {
+    setUploadingArtistImage(true)
+    console.log(' Updating artist...')
+    
+    // Create FormData for file upload
+    const formData = new FormData()
+    formData.append('name', editingArtist.name.trim())
+    formData.append('location', editingArtist.location?.trim() || '')
+    formData.append('style', editingArtist.style?.trim() || '')
+    formData.append('bio', editingArtist.bio?.trim() || '')
+    formData.append('email', editingArtist.email?.trim().toLowerCase() || '')
+    formData.append('phone', editingArtist.phone?.trim() || '')
+    formData.append('instagram', editingArtist.instagram?.trim() || '')
+    formData.append('facebook', editingArtist.facebook?.trim() || '')
+    formData.append('twitter', editingArtist.twitter?.trim() || '')
+    formData.append('website', editingArtist.website?.trim() || '')
+    
+    // Add profile image if new one selected
+    if (artistProfileImage) {
+      formData.append('profileImage', artistProfileImage)
+    }
+    
+    await axios.put(
+      `${API_URL}/artists/admin/update/${editingArtist.id}`,
+      formData,
+      {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    )
+    
+    alert(' Artist updated successfully!')
+    setEditingArtist(null)
+    setArtistProfileImage(null)
+    await loadDashboardData(true)
+    
+  } catch (error) {
+    alert('Failed: ' + (error.response?.data?.error || error.message))
+  } finally {
+    setUploadingArtistImage(false)
+  }
+}
+
+const handleDeleteArtist = async (id, name) => {
+  if (!window.confirm(`Delete "${name}"? Artworks will be preserved.`)) return
+  
+  try {
+    await axios.delete(`${API_URL}/artists/admin/delete/${id}`, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    alert(' Artist deleted!')
+    await loadDashboardData(true)
+    
+  } catch (error) {
+    alert('Failed: ' + (error.response?.data?.error || error.message))
   }
 }
 
@@ -738,7 +913,7 @@ const refreshAllData = async () => {
       </div>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '2px solid #e5e5e5', flexWrap: 'wrap' }}>
-        {['dashboard', 'artworks', 'categories', 'orders', 'feedback', 'export'].map(tab => (
+        {['dashboard', 'artworks', 'categories', 'orders', 'feedback', 'artists', 'export'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -990,6 +1165,24 @@ const refreshAllData = async () => {
                 value={newArtwork.price}
                 onChange={(e) => setNewArtwork({...newArtwork, price: e.target.value})}
               />
+            </div>
+
+            <div className="form-group">
+              <label>Artist (Optional)</label>
+              <select
+                value={newArtwork.artist_id}
+                onChange={(e) => setNewArtwork({...newArtwork, artist_id: e.target.value})}
+              >
+                <option value="">No artist assigned</option>
+                {artists.map(artist => (
+                  <option key={artist.id} value={artist.id}>
+                    {artist.name} {artist.location ? `- ${artist.location}` : ''}
+                  </option>
+                ))}
+              </select>
+              <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+                Link this artwork to an artist 
+              </p>
             </div>
 
             <div className="form-group">
@@ -1411,6 +1604,356 @@ const refreshAllData = async () => {
     )}
   </div>
 )}
+
+{activeTab === 'artists' && (
+        <div className="info-section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <h2>Manage Artists</h2>
+            <button 
+              className="btn" 
+              onClick={() => {
+                setShowArtistForm(!showArtistForm)
+                setEditingArtist(null)
+              }}
+              style={{ padding: '0.8rem 1.5rem' }}
+            >
+              {showArtistForm ? 'Cancel' : '+ Add New Artist'}
+            </button>
+          </div>
+
+          {/* ===== ADD/EDIT ARTIST FORM ===== */}
+          {(showArtistForm || editingArtist) && (
+            <form 
+              onSubmit={editingArtist ? handleUpdateArtist : handleAddArtist}
+              style={{ 
+                background: '#f9f7f5', 
+                padding: '2rem', 
+                borderRadius: '12px', 
+                marginBottom: '2rem',
+                border: '2px solid #8b7355'
+              }}
+            >
+              <h3 style={{ marginBottom: '1.5rem', color: '#8b7355' }}>
+                {editingArtist ? ' Edit Artist' : ' Add New Artist'}
+              </h3>
+
+              <div className="form-group">
+                <label>Artist Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={editingArtist ? editingArtist.name : newArtist.name}
+                  onChange={(e) => editingArtist
+                    ? setEditingArtist({...editingArtist, name: e.target.value})
+                    : setNewArtist({...newArtist, name: e.target.value})
+                  }
+                  placeholder="Full name of the artist"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>Location</label>
+                  <input
+                    type="text"
+                    value={editingArtist ? editingArtist.location : newArtist.location}
+                    onChange={(e) => editingArtist
+                      ? setEditingArtist({...editingArtist, location: e.target.value})
+                      : setNewArtist({...newArtist, location: e.target.value})
+                    }
+                    placeholder="e.g., Mumbai, India"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Art Style</label>
+                  <input
+                    type="text"
+                    value={editingArtist ? editingArtist.style : newArtist.style}
+                    onChange={(e) => editingArtist
+                      ? setEditingArtist({...editingArtist, style: e.target.value})
+                      : setNewArtist({...newArtist, style: e.target.value})
+                    }
+                    placeholder="e.g., Watercolor, Digital Art"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Biography</label>
+                <textarea
+                  rows="4"
+                  value={editingArtist ? editingArtist.bio : newArtist.bio}
+                  onChange={(e) => editingArtist
+                    ? setEditingArtist({...editingArtist, bio: e.target.value})
+                    : setNewArtist({...newArtist, bio: e.target.value})
+                  }
+                  placeholder="Tell us about the artist, their journey, achievements..."
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={editingArtist ? editingArtist.email : newArtist.email}
+                    onChange={(e) => editingArtist
+                      ? setEditingArtist({...editingArtist, email: e.target.value})
+                      : setNewArtist({...newArtist, email: e.target.value})
+                    }
+                    placeholder="artist@example.com"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Phone</label>
+                  <input
+                    type="tel"
+                    value={editingArtist ? editingArtist.phone : newArtist.phone}
+                    onChange={(e) => editingArtist
+                      ? setEditingArtist({...editingArtist, phone: e.target.value})
+                      : setNewArtist({...newArtist, phone: e.target.value})
+                    }
+                    placeholder="10-digit phone number"
+                  />
+                </div>
+              </div>
+
+              <h4 style={{ marginTop: '1.5rem', marginBottom: '1rem', color: '#8b7355' }}>
+                Social Media Links
+              </h4>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>Instagram</label>
+                  <input
+                    type="text"
+                    value={editingArtist ? editingArtist.instagram : newArtist.instagram}
+                    onChange={(e) => editingArtist
+                      ? setEditingArtist({...editingArtist, instagram: e.target.value})
+                      : setNewArtist({...newArtist, instagram: e.target.value})
+                    }
+                    placeholder="@username"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Facebook</label>
+                  <input
+                    type="text"
+                    value={editingArtist ? editingArtist.facebook : newArtist.facebook}
+                    onChange={(e) => editingArtist
+                      ? setEditingArtist({...editingArtist, facebook: e.target.value})
+                      : setNewArtist({...newArtist, facebook: e.target.value})
+                    }
+                    placeholder="Facebook profile URL"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Twitter</label>
+                  <input
+                    type="text"
+                    value={editingArtist ? editingArtist.twitter : newArtist.twitter}
+                    onChange={(e) => editingArtist
+                      ? setEditingArtist({...editingArtist, twitter: e.target.value})
+                      : setNewArtist({...newArtist, twitter: e.target.value})
+                    }
+                    placeholder="Twitter profile URL"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Website</label>
+                  <input
+                    type="url"
+                    value={editingArtist ? editingArtist.website : newArtist.website}
+                    onChange={(e) => editingArtist
+                      ? setEditingArtist({...editingArtist, website: e.target.value})
+                      : setNewArtist({...newArtist, website: e.target.value})
+                    }
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Profile Photo *</label>
+                <input
+                  type="file"
+                  id="artistProfileImage"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setArtistProfileImage(e.target.files[0])
+                    }
+                  }}
+                  style={{ padding: '0.5rem' }}
+                />
+                {artistProfileImage && (
+                  <p style={{ marginTop: '0.5rem', color: '#8b7355', fontSize: '0.9rem' }}>
+                    ✓ Selected: {artistProfileImage.name}
+                  </p>
+                )}
+                {editingArtist && editingArtist.profile_image_url && !artistProfileImage && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.5rem' }}>
+                      Current photo:
+                    </p>
+                    <img 
+                      src={editingArtist.profile_image_url}
+                      alt="Current profile"
+                      style={{
+                        width: '100px',
+                        height: '100px',
+                        borderRadius: '8px',
+                        objectFit: 'cover',
+                        border: '2px solid #8b7355'
+                      }}
+                    />
+                    <p style={{ fontSize: '0.85rem', color: '#999', marginTop: '0.5rem' }}>
+                      Upload a new image to replace this
+                    </p>
+                  </div>
+                )}
+                <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
+                   Upload JPG, PNG, or WebP (max 5MB)
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="submit" className="btn" disabled={uploadingArtistImage}>
+                  {uploadingArtistImage 
+                    ? ' Uploading...' 
+                    : editingArtist ? 'Update Artist' : ' Add Artist'
+                  }
+                </button>
+                {editingArtist && (
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary"
+                    onClick={() => setEditingArtist(null)}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+
+          {/* ===== ARTISTS LIST ===== */}
+          <h3 style={{ marginBottom: '1.5rem' }}>
+            All Artists ({artists.length})
+          </h3>
+          
+          {artists.length === 0 ? (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '3rem', 
+              background: '#f9f7f5', 
+              borderRadius: '12px',
+              border: '2px dashed #8b7355'
+            }}>
+              <p style={{ color: '#666', fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                 No artists yet
+              </p>
+              <p style={{ color: '#999', fontSize: '0.95rem' }}>
+                Click "Add New Artist" to create your first artist profile
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: '1.5rem' }}>
+              {artists.map(artist => (
+                <div 
+                  key={artist.id} 
+                  style={{ 
+                    display: 'flex', 
+                    gap: '1.5rem', 
+                    padding: '1.5rem', 
+                    background: '#f9f7f5', 
+                    borderRadius: '12px',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    border: '1px solid #e8ddd0'
+                  }}
+                >
+                  {/* Profile Image */}
+                  <img
+                    src={artist.profile_image_url || 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%27100%27%3E%3Crect fill=%27%23e8ddd0%27 width=%27100%27 height=%27100%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%238b7355%27%3E%3C/text%3E%3C/svg%3E'}
+                    alt={artist.name}
+                    style={{
+                      width: '100px',
+                      height: '100px',
+                      borderRadius: '8px',
+                      objectFit: 'cover',
+                      border: '2px solid #8b7355'
+                    }}
+                    onError={(e) => {
+                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27100%27 height=%27100%27%3E%3Crect fill=%27%23e8ddd0%27 width=%27100%27 height=%27100%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-size=%2740%27 fill=%27%238b7355%27%3E%3C/text%3E%3C/svg%3E'
+                    }}
+                  />
+                  
+                  {/* Artist Info */}
+                  <div style={{ flex: 1, minWidth: '250px' }}>
+                    <h4 style={{ marginBottom: '0.5rem', fontSize: '1.2rem' }}>
+                      {artist.name}
+                    </h4>
+                    {artist.location && (
+                      <p style={{ color: '#666', fontSize: '0.9rem', margin: '0.3rem 0' }}>
+                         {artist.location}
+                      </p>
+                    )}
+                    {artist.style && (
+                      <p style={{ color: '#8b7355', fontSize: '0.9rem', margin: '0.3rem 0' }}>
+                         {artist.style}
+                      </p>
+                    )}
+                    <p style={{ 
+                      color: '#999', 
+                      fontSize: '0.85rem', 
+                      marginTop: '0.5rem',
+                      background: '#e8ddd0',
+                      padding: '0.3rem 0.6rem',
+                      borderRadius: '12px',
+                      display: 'inline-block'
+                    }}>
+                      {artist.artwork_count || 0} artwork{artist.artwork_count !== 1 ? 's' : ''}
+                    </p>
+                    {artist.email && (
+                      <p style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+                         {artist.email}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div style={{ display: 'flex', gap: '0.8rem', flexDirection: 'column' }}>
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        setEditingArtist(artist)
+                        setShowArtistForm(false)
+                        window.scrollTo({ top: 0, behavior: 'smooth' })
+                      }}
+                      style={{ padding: '0.6rem 1.2rem', minWidth: '100px' }}
+                    >
+                       Edit
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handleDeleteArtist(artist.id, artist.name)}
+                      style={{ padding: '0.6rem 1.2rem', minWidth: '100px' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {activeTab === 'export' && (
         <div className="info-section">

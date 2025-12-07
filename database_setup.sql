@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS artworks (
   medium VARCHAR(100),
   dimensions VARCHAR(100),
   year VARCHAR(10),
+  image_url VARCHAR(500),
   price VARCHAR(50) NOT NULL,
   photos JSON NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -42,6 +43,52 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE SET NULL
 );
+
+CREATE TABLE artwork_categories (
+    artwork_id INT NOT NULL,
+    category_id INT NOT NULL,
+    FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+    PRIMARY KEY (artwork_id, category_id)
+);
+
+-- Artists table
+CREATE TABLE IF NOT EXISTS artists (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  location VARCHAR(255),
+  style VARCHAR(255),
+  bio TEXT,
+  email VARCHAR(255),
+  phone VARCHAR(50),
+  instagram VARCHAR(255),
+  facebook VARCHAR(255),
+  twitter VARCHAR(255),
+  website VARCHAR(255),
+  profile_image_url VARCHAR(500),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_artists_name ON artists(name);
+CREATE INDEX idx_artists_created ON artists(created_at);
+
+-- Add artist_id to artworks table (nullable to preserve existing data)
+ALTER TABLE artworks
+  ADD COLUMN artist_id INT NULL;
+
+ALTER TABLE artworks
+  ADD CONSTRAINT fk_artworks_artists
+  FOREIGN KEY (artist_id) REFERENCES artists(id)
+  ON DELETE SET NULL;
+
+
+-- Add index for better performance
+CREATE INDEX idx_artist_id ON artworks(artist_id);
+
+
+SELECT 'Artists table created successfully!' as Status;
+SELECT COUNT(*) as ArtistCount FROM artists;
 
 -- Admin Table
 CREATE TABLE IF NOT EXISTS admin (

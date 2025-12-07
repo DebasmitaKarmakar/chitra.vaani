@@ -10,9 +10,10 @@ const { validate } = require('../middleware/validation');
 router.get('/', async (req, res) => {
   try {
     const [artworks] = await promisePool.query(`
-      SELECT a.*, c.name as category_name 
+      SELECT a.*, c.name as category_name, ar.name as artist_name
       FROM artworks a
       LEFT JOIN categories c ON a.category_id = c.id
+      LEFT JOIN artists ar ON a.artist_id = ar.id
       ORDER BY a.created_at DESC
     `);
 
@@ -33,9 +34,10 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const [artworks] = await promisePool.query(`
-      SELECT a.*, c.name as category_name 
+      SELECT a.*, c.name as category_name, ar.name as artist_name, ar.id as artist_id
       FROM artworks a
       LEFT JOIN categories c ON a.category_id = c.id
+      LEFT JOIN artists ar ON a.artist_id = ar.id
       WHERE a.id = ?
     `, [req.params.id]);
 
@@ -53,6 +55,83 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching artwork:', error);
     res.status(500).json({ error: 'Failed to fetch artwork' });
+  }
+});
+
+// Update the CREATE artwork endpoint in artworks.js
+
+router.post('/', requireAdmin, upload.array('photos', 10), async (req, res) => {
+  try {
+    const { title, description, category, medium, dimensions, year, price, artist_id } = req.body;
+
+    if (!title || !category || !price || !req.files || req.files.length === 0) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: title, category, price, and at least one photo' 
+      });
+    }
+
+    const [categories] = await promisePool.query(
+      'SELECT id FROM categories WHERE name = ?',
+      [category]
+    );
+
+    if (categories.length === 0) {
+      return res.status(400).json({ error: 'Invalid category' });
+    }
+
+    const category_id = categories[0].id;
+
+    // Validate artist_id if provided
+    let validatedArtistId = null;
+    if (artist_id && artist_id !== 'null' && artist_id !== '') {
+      const [artists] = await promisePool.query(
+        'SELECT id FROM artists WHERE id = ?',
+        [artist_id]
+      );
+      
+      if (artists.length === 0) {
+        return res.status(400).json({ error: 'Invalid artist ID' });
+      }
+      
+      validatedArtistId = artist_id;
+    }
+
+    const uploadPromises = req.files.map((file, index) => 
+      uploadToCloudinary(file).then(result => ({
+        url: result.url,
+        public_id: result.public_id,
+        label: req.body[`label_${index}`] || `Photo ${index + 1}`
+      }))
+    );
+
+    const photos = await Promise.all(uploadPromises);
+
+    const [result] = await promisePool.query(
+      `INSERT INTO artworks 
+       (title, description, category_id, medium, dimensions, year, price, photos, artist_id) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        title,
+        description || null,
+        category_id,
+        medium || null,
+        dimensions || null,
+        year || null,
+        price,
+        JSON.stringify(photos),
+        validatedArtistId
+      ]
+    );
+
+    res.status(201).json({
+      message: 'Artwork created successfully',
+      id: result.insertId,
+      photos: photos
+    });
+
+  } catch (error) {
+    console.error('Error creating artwork:', error);
+    res.status(500).json({ error: 'Failed to create artwork' });
   }
 });
 

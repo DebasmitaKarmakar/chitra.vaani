@@ -179,7 +179,7 @@ function Artwork() {
   return (
     <div className="container fade-in">
       <button className="btn btn-secondary" onClick={() => navigate('/gallery')} style={{ marginBottom: '2rem' }}>
-        ← Back to Gallery
+        Back to Gallery
       </button>
 
       <div className="info-section">
@@ -239,6 +239,35 @@ function Artwork() {
         <div className="artwork-category">{artwork.category}</div>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{artwork.title}</h1>
         <p className="artwork-price" style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>{artwork.price}</p>
+
+        {artwork.artist_name && (
+          <div style={{ 
+            background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)', 
+            padding: '1.5rem', 
+            borderRadius: '12px', 
+            marginBottom: '2rem',
+            border: '2px solid #8b7355'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontSize: '1.2rem' }}></span>
+              <h3 style={{ margin: 0, color: '#8b7355' }}>Artist</h3>
+            </div>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: '#333', margin: '0.5rem 0' }}>
+              {artwork.artist_name}
+            </p>
+            <button
+              className="btn btn-secondary"
+              onClick={() => navigate('/artists')}
+              style={{ 
+                marginTop: '0.8rem',
+                padding: '0.6rem 1.2rem',
+                fontSize: '0.95rem'
+              }}
+            >
+              View All Artists
+            </button>
+          </div>
+        )}
 
         {artwork.description && (
           <div style={{ background: '#f9f7f5', padding: '2rem', borderRadius: '12px', marginBottom: '2rem' }}>

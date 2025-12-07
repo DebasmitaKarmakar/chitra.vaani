@@ -3,8 +3,9 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import Home from './pages/Home'
 import Gallery from './pages/Gallery'
+import Artists from './pages/Artists'
 import Artwork from './pages/Artwork'
-import Order from "./pages/Order.jsx";
+import Order from "./pages/Order.jsx"
 import Contact from './pages/Contact'
 import Admin from './pages/Admin'
 
@@ -16,6 +17,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/gallery" element={<Gallery />} />
+          <Route path="/artists" element={<Artists />} />
           <Route path="/artwork/:id" element={<Artwork />} />
           <Route path="/order" element={<Order />} />
           <Route path="/contact" element={<Contact />} />

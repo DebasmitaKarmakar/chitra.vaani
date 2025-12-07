@@ -134,6 +134,29 @@ async function initDatabase() {
     `);
     console.log(' Admin table ready');
 
+    // Create artists table
+    await promisePool.query(`
+      CREATE TABLE IF NOT EXISTS artists (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        location VARCHAR(255),
+        style VARCHAR(255),
+        bio TEXT,
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        instagram VARCHAR(255),
+        facebook VARCHAR(255),
+        twitter VARCHAR(255),
+        website VARCHAR(255),
+        profile_image_url VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_name (name),
+        INDEX idx_created (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log(' Artists table ready');
+
     // Create feedback table
     await promisePool.query(`
       CREATE TABLE IF NOT EXISTS feedback (
@@ -152,6 +175,24 @@ async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     console.log(' Feedback table ready');
+
+    // Add artist_id to artworks table if not exists
+    try {
+      await promisePool.query(`
+        ALTER TABLE artworks
+        ADD COLUMN artist_id INT NULL,
+        ADD CONSTRAINT fk_artworks_artists
+          FOREIGN KEY (artist_id) REFERENCES artists(id)
+          ON DELETE SET NULL
+      `);
+      console.log('✓ Added artist_id column to artworks');
+    } catch (err) {
+      if (err.code === 'ER_DUP_FIELDNAME' || err.code === 'ER_DUP_KEYNAME') {
+        console.log('  artist_id column already exists in artworks');
+      } else {
+        console.warn('  Note: artist_id may already exist or constraint failed:', err.message);
+      }
+    }
 
     // Check and insert default categories
     const [categoryCount] = await promisePool.query('SELECT COUNT(*) as count FROM categories');
@@ -225,12 +266,13 @@ async function initDatabase() {
     const [catCount] = await promisePool.query('SELECT COUNT(*) as count FROM categories');
     const [artCount] = await promisePool.query('SELECT COUNT(*) as count FROM artworks');
     const [ordCount] = await promisePool.query('SELECT COUNT(*) as count FROM orders');
-    
+    const [artistsCount] = await promisePool.query('SELECT COUNT(*) as count FROM artists');
+
     console.log(' Database stats:');
     console.log('   - Categories:', catCount[0].count);
     console.log('   - Artworks:', artCount[0].count);
     console.log('   - Orders:', ordCount[0].count);
-
+    console.log('   - Artists:', artistsCount[0].count); 
     console.log(' Database initialization complete!');
     return true;
 
