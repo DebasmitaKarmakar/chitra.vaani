@@ -269,7 +269,7 @@ const handleWhatsAppOrder = async () => {
         {/* Artwork Details */}
         <div className="artwork-category">{artwork.category}</div>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{artwork.title}</h1>
-        <p className="artwork-price" style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>{artwork.price}</p>
+        <p className="artwork-price" style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>₹{artwork.price}</p>
 
         {artwork.artist_name && (
           <div style={{ 

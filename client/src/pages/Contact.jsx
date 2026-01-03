@@ -172,16 +172,6 @@ function Contact() {
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', margin: '2.5rem 0' }}>
           <div style={{ textAlign: 'center', padding: '2.5rem', background: '#f9f7f5', borderRadius: '12px' }}>
-            <h3 style={{ marginBottom: '1rem' }}>WhatsApp</h3>
-            <p style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#2c2c2c', margin: '1rem 0' }}>
-              +91-9436357001
-            </p>
-            <button className="btn btn-whatsapp" onClick={handleWhatsApp}>
-              Message Me
-            </button>
-          </div>
-          
-          <div style={{ textAlign: 'center', padding: '2.5rem', background: '#f9f7f5', borderRadius: '12px' }}>
             <h3 style={{ marginBottom: '1rem' }}>Email</h3>
             <p style={{ fontSize: '1.1rem', color: '#555', margin: '1rem 0', wordBreak: 'break-word' }}>
               {email}

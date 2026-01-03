@@ -24,7 +24,7 @@ function ArtworkCard({ artwork }) {
       <div className="artwork-info">
         <div className="artwork-category">{artwork.category}</div>
         <h3 className="artwork-title">{artwork.title}</h3>
-        <p className="artwork-price">{artwork.price}</p>
+        <p className="artwork-price">₹{artwork.price}</p>
         <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
            {photos.length} photo{photos.length > 1 ? 's' : ''}
         </p>

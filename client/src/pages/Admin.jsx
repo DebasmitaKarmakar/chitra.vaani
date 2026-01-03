@@ -479,18 +479,18 @@ const handleAddArtist = async (e) => {
   e.preventDefault()
   
   if (!newArtist.name || newArtist.name.trim().length < 2) {
-    alert(' Artist name is required (minimum 2 characters)')
+    alert('⚠️ Artist name is required (minimum 2 characters)')
     return
   }
 
   if (newArtist.email && !newArtist.email.includes('@')) {
-    alert(' Please enter a valid email address')
+    alert('⚠️ Please enter a valid email address')
     return
   }
 
   try {
     setUploadingArtistImage(true)
-    console.log(' Creating new artist...')
+    console.log('🎨 Creating new artist...')
     
     // Create FormData for file upload
     const formData = new FormData()
@@ -509,18 +509,19 @@ const handleAddArtist = async (e) => {
       formData.append('profileImage', artistProfileImage)
     }
     
-await axios.post(
-      `${API_URL}/artists/admin/test-create`, 
+    // ✅ CRITICAL: Send token in headers
+    await axios.post(
+      `${API_URL}/artists/admin/create`, 
       formData, 
       {
         headers: { 
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,  // ← MUST HAVE THIS
           'Content-Type': 'multipart/form-data'
         }
       }
     )
     
-    alert(' Artist added successfully!')
+    alert('✅ Artist added successfully!')
     
     // Reset form
     setNewArtist({
@@ -529,6 +530,7 @@ await axios.post(
       website: '', profile_image_url: ''
     })
     setArtistProfileImage(null)
+    
     // Clear file input
     const fileInput = document.getElementById('artistProfileImage')
     if (fileInput) fileInput.value = ''
@@ -537,7 +539,7 @@ await axios.post(
     await loadDashboardData(true)
     
   } catch (error) {
-    console.error(' Error:', error)
+    console.error('❌ Error:', error)
     alert('Failed: ' + (error.response?.data?.error || error.message))
   } finally {
     setUploadingArtistImage(false)
