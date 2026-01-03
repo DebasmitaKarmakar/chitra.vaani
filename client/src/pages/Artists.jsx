@@ -188,16 +188,6 @@ function Artists() {
                          Facebook
                       </a>
                     )}
-                    {artist.twitter && (
-                      <a 
-                        href={artist.twitter}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#8b7355', textDecoration: 'none' }}
-                      >
-                         Twitter
-                      </a>
-                    )}
                     {artist.website && (
                       <a 
                         href={artist.website}

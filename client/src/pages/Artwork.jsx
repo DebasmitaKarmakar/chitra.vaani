@@ -43,17 +43,48 @@ function Artwork() {
     }
   }
 
-  // WhatsApp order (existing functionality)
-  const handleWhatsAppOrder = () => {
-    if (!orderData.customerName || !orderData.customerPhone || !orderData.deliveryAddress) {
-      alert(' Please fill: Name, Phone, and Address first');
-      return;
-    }
-
-    const message = `Hi! I'd like to order:\n\n*${artwork.title}*\nCategory: ${artwork.category}\nPrice: ${artwork.price}\n\n*Order Details:*\nSize: ${orderData.size}\nNotes: ${orderData.notes || 'None'}\n\n*My Details:*\nName: ${orderData.customerName}\nPhone: ${orderData.customerPhone}\nAddress: ${orderData.deliveryAddress}`
-    
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank')
+// WhatsApp order + save to DB
+const handleWhatsAppOrder = async () => {
+  if (!orderData.customerName || !orderData.customerPhone || !orderData.deliveryAddress) {
+    alert('Please fill: Name, Phone, and Address first');
+    return;
   }
+
+  try {
+    // 1. SAVE ORDER TO BACKEND (THIS WAS MISSING)
+    await axios.post(`${API_URL}/orders`, {
+      order_type: 'regular',
+      artwork_id: artwork.id,
+
+      // match backend expected fields
+      customer_name: orderData.customerName,
+      customer_email: orderData.customerEmail || '',
+      customer_phone: orderData.customerPhone,
+      delivery_address: orderData.deliveryAddress,
+
+      order_details: {
+        artwork_title: artwork.title,
+        category: artwork.category,
+        price: artwork.price,
+        size: orderData.size,
+        notes: orderData.notes || 'None'
+      }
+    });
+
+    //2. EXISTING WHATSAPP FUNCTIONALITY (UNCHANGED)
+    const message = `Hi! I'd like to order:\n\n*${artwork.title}*\nCategory: ${artwork.category}\nPrice: ${artwork.price}\n\n*Order Details:*\nSize: ${orderData.size}\nNotes: ${orderData.notes || 'None'}\n\n*My Details:*\nName: ${orderData.customerName}\nPhone: ${orderData.customerPhone}\nAddress: ${orderData.deliveryAddress}`;
+
+    window.open(
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
+      '_blank'
+    );
+
+  } catch (error) {
+    console.error('Order save failed:', error);
+    alert('Failed to place order. Please try again.');
+  }
+};
+
 
   // NEW: Database order submission
   const handleDatabaseOrder = async (e) => {

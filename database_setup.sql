@@ -6,147 +6,103 @@ CREATE DATABASE IF NOT EXISTS chitravaani;
 USE chitravaani;
 
 -- Categories Table
-CREATE TABLE IF NOT EXISTS categories (
-  id INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE categories (
+  id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL UNIQUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Artworks Table
-CREATE TABLE IF NOT EXISTS artworks (
-  id INT PRIMARY KEY AUTO_INCREMENT,
+-- 2. ARTISTS TABLE (parent)
+CREATE TABLE artists (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  location VARCHAR(255) DEFAULT NULL,
+  style VARCHAR(255) DEFAULT NULL,
+  bio TEXT DEFAULT NULL,
+  email VARCHAR(255) DEFAULT NULL,
+  phone VARCHAR(20) DEFAULT NULL,
+  instagram VARCHAR(255) DEFAULT NULL,
+  facebook VARCHAR(255) DEFAULT NULL,
+  twitter VARCHAR(255) DEFAULT NULL,
+  website VARCHAR(255) DEFAULT NULL,
+  profile_image_url TEXT DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3. ARTWORKS TABLE (child - references categories and artists)
+CREATE TABLE artworks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   description TEXT,
   category_id INT,
+  artist_id INT DEFAULT NULL,
   medium VARCHAR(100),
   dimensions VARCHAR(100),
   year VARCHAR(10),
-  image_url VARCHAR(500),
-  price VARCHAR(50) NOT NULL,
-  photos JSON NOT NULL,
+  price VARCHAR(50),
+  photos JSON,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
-);
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+  FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE SET NULL,
+  INDEX idx_category (category_id),
+  INDEX idx_artist (artist_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Orders Table
-CREATE TABLE IF NOT EXISTS orders (
-  id INT PRIMARY KEY AUTO_INCREMENT,
+-- 4. ORDERS TABLE (child - references artworks)
+CREATE TABLE orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
   order_type ENUM('regular', 'custom', 'bulk') NOT NULL,
-  artwork_id INT NULL,
+  artwork_id INT DEFAULT NULL,
   customer_name VARCHAR(255) NOT NULL,
   customer_email VARCHAR(255) NOT NULL,
   customer_phone VARCHAR(20),
   delivery_address TEXT,
-  order_details JSON NOT NULL,
+  order_details JSON,
   status ENUM('Pending', 'Completed', 'Cancelled') DEFAULT 'Pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE SET NULL
-);
-
-CREATE TABLE artwork_categories (
-    artwork_id INT NOT NULL,
-    category_id INT NOT NULL,
-    FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
-    PRIMARY KEY (artwork_id, category_id)
-);
-
--- Artists table
-CREATE TABLE IF NOT EXISTS artists (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  location VARCHAR(255),
-  style VARCHAR(255),
-  bio TEXT,
-  email VARCHAR(255),
-  phone VARCHAR(50),
-  instagram VARCHAR(255),
-  facebook VARCHAR(255),
-  twitter VARCHAR(255),
-  website VARCHAR(255),
-  profile_image_url VARCHAR(500),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE INDEX idx_artists_name ON artists(name);
-CREATE INDEX idx_artists_created ON artists(created_at);
-
--- Add artist_id to artworks table (nullable to preserve existing data)
-ALTER TABLE artworks
-  ADD COLUMN artist_id INT NULL;
-
-ALTER TABLE artworks
-  ADD CONSTRAINT fk_artworks_artists
-  FOREIGN KEY (artist_id) REFERENCES artists(id)
-  ON DELETE SET NULL;
-
-
--- Add index for better performance
-CREATE INDEX idx_artist_id ON artworks(artist_id);
-
-
-SELECT 'Artists table created successfully!' as Status;
-SELECT COUNT(*) as ArtistCount FROM artists;
-
--- Admin Table
-CREATE TABLE IF NOT EXISTS admin (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  username VARCHAR(50) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS feedback (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  customer_name VARCHAR(255) NOT NULL,
-  customer_email VARCHAR(255) NOT NULL,
-  feedback_type VARCHAR(50) NOT NULL,
-  rating INT NOT NULL,
-  message TEXT NOT NULL,
-  status VARCHAR(20) DEFAULT 'New',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  FOREIGN KEY (artwork_id) REFERENCES artworks(id) ON DELETE SET NULL,
+  INDEX idx_status (status),
+  INDEX idx_email (customer_email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Verify table was created
-SHOW TABLES LIKE 'feedback';
+-- 5. FEEDBACK TABLE (independent)
+CREATE TABLE feedback (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  customer_name VARCHAR(255) NOT NULL,
+  customer_email VARCHAR(255) NOT NULL,
+  customer_phone VARCHAR(20) DEFAULT NULL,
+  subject VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  status ENUM('Pending', 'Reviewed', 'Resolved') DEFAULT 'Pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_status (status),
+  INDEX idx_rating (rating)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Check table structure
-DESCRIBE feedback;
+-- Step 3: Insert sample categories
+INSERT INTO categories (name) VALUES 
+('Watercolors'),
+('Acrylics'),
+('Sketches'),
+('Digital Art'),
+('Oil Paintings'),
+('Mixed Media');
 
--- Insert a test record to verify it works
-INSERT INTO feedback (customer_name, customer_email, feedback_type, rating, message)
-VALUES ('Test User', 'test@example.com', 'website_experience', 5, 'This is a test feedback');
+ALTER TABLE artworks
+ADD COLUMN artist_id INT NULL,
+ADD INDEX idx_artist (artist_id),
+ADD CONSTRAINT fk_artist
+FOREIGN KEY (artist_id)
+REFERENCES artists(id)
+ON DELETE SET NULL;
 
--- Check if data was inserted
-SELECT * FROM feedback;
-
--- If successful, delete the test record
-DELETE FROM feedback WHERE customer_email = 'test@example.com';
-
-SELECT 'Feedback table is ready!' as Status;
--- Insert Default Categories
-INSERT IGNORE INTO categories (name) VALUES 
-  ('Paintings'),
-  ('Bookmarks'),
-  ('Handbands'),
-  ('Badges'),
-  ('Clay Work');
-
--- Insert Default Admin (password: admin123)
--- Note: This hash is for 'admin' - change it after first login!
-INSERT INTO admin (username, password_hash)
-VALUES (
-  'OH.RIM',
-  '$2b$12$rX5IAVgl4.5V7DQfBgShGOar3yUYVkYrTmX22h0MjtjTKYkzFAuYK'
-);
-
--- Show tables
-SHOW TABLES;
-
--- Verify setup
-SELECT 'Setup Complete!' as Status;
+-- Done!
+SELECT 'Database setup completed successfully!' as Status;
 SELECT COUNT(*) as CategoryCount FROM categories;
 SELECT COUNT(*) as AdminCount FROM admin;

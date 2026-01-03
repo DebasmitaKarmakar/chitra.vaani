@@ -116,9 +116,9 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 app.use('/api/artworks', artworkRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/categories', categoryRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/artists', artistRoutes);
 

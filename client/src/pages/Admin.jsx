@@ -42,7 +42,6 @@ function Admin() {
     phone: '',
     instagram: '',
     facebook: '',
-    twitter: '',
     website: '',
     profile_image_url: ''
   })
@@ -503,7 +502,6 @@ const handleAddArtist = async (e) => {
     formData.append('phone', newArtist.phone?.trim() || '')
     formData.append('instagram', newArtist.instagram?.trim() || '')
     formData.append('facebook', newArtist.facebook?.trim() || '')
-    formData.append('twitter', newArtist.twitter?.trim() || '')
     formData.append('website', newArtist.website?.trim() || '')
     
     // Add profile image if selected
@@ -512,7 +510,7 @@ const handleAddArtist = async (e) => {
     }
     
 await axios.post(
-      `${API_URL}/artists/admin/create`, 
+      `${API_URL}/artists/admin/test-create`, 
       formData, 
       {
         headers: { 
@@ -527,7 +525,7 @@ await axios.post(
     // Reset form
     setNewArtist({
       name: '', location: '', style: '', bio: '', email: '',
-      phone: '', instagram: '', facebook: '', twitter: '', 
+      phone: '', instagram: '', facebook: '',  
       website: '', profile_image_url: ''
     })
     setArtistProfileImage(null)
@@ -573,7 +571,6 @@ const handleUpdateArtist = async (e) => {
     formData.append('phone', editingArtist.phone?.trim() || '')
     formData.append('instagram', editingArtist.instagram?.trim() || '')
     formData.append('facebook', editingArtist.facebook?.trim() || '')
-    formData.append('twitter', editingArtist.twitter?.trim() || '')
     formData.append('website', editingArtist.website?.trim() || '')
     
     // Add profile image if new one selected
@@ -683,6 +680,31 @@ const handleDeleteArtist = async (id, name) => {
     }
   }
 
+const handleExportArtists = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/admin/export/artists`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      responseType: 'blob'
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `artists_${Date.now()}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    alert('Artists exported successfully!');
+  } catch (error) {
+    console.error('Error exporting artists:', error);
+    alert('Failed to export artists');
+  }
+};
+
 // Replace your handleExportFeedback function in Admin.jsx
 
 const handleExportFeedback = async () => {
@@ -746,6 +768,7 @@ const handleExportFeedback = async () => {
     alert('x' + errorMessage);
   }
 };
+
 
 // Force refresh all data after any action
 const refreshAllData = async () => {
@@ -1752,19 +1775,6 @@ const refreshAllData = async () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Twitter</label>
-                  <input
-                    type="text"
-                    value={editingArtist ? editingArtist.twitter : newArtist.twitter}
-                    onChange={(e) => editingArtist
-                      ? setEditingArtist({...editingArtist, twitter: e.target.value})
-                      : setNewArtist({...newArtist, twitter: e.target.value})
-                    }
-                    placeholder="Twitter profile URL"
-                  />
-                </div>
-
-                <div className="form-group">
                   <label>Website</label>
                   <input
                     type="url"
@@ -1982,6 +1992,16 @@ const refreshAllData = async () => {
               <button className="btn" onClick={handleExportFeedback} style={{ marginTop: '1rem' }}>
                 Download Feedback Excel
               </button>
+            </div>
+
+            <div style={{ background: '#f9f7f5', padding: '2rem', borderRadius: '12px' }}>
+            <div className="export-card">
+              <h3>Export Artists</h3>
+              <p>Download all artist profiles as Excel spreadsheet</p>
+              <button className="btn" onClick={handleExportArtists} style={{ marginTop: '1rem' }}>
+                Download Artist Excel
+              </button>
+            </div>
             </div>
           </div>
 
